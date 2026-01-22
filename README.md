@@ -9,7 +9,12 @@ See [the web page](https://uofa-cmput404.github.io/general/project.html) for a d
 Make a distributed social network!
 
 ## Team Members
-Jingtao Zhang
+Jingtao Zhang (jingtao3)
+Harmanjot Kaur Dhaliwal (harmanj3)
+Harneet Tatla (harneetk)
+Izza Khalid (ikhalid)
+Christopher Lamers (chlamers)
+Brandon Hsu (bphsu)
 
 ## License
 
