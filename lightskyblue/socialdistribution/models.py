@@ -20,5 +20,7 @@ class AuthorProfile(models.Model):
     github_url = models.URLField(blank=True)
     website_url = models.URLField(blank=True)
 
+    picture_url = models.URLField(blank=True)
+
     def __str__(self):
         return self.display_name or self.user.username

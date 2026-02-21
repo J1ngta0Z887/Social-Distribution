@@ -1,9 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from .models import Author, AuthorProfile
+from .forms import AuthorProfileForm
 
 @login_required
 def home(request):
@@ -22,6 +23,25 @@ def public_author_profile(request, username):
     })
 
 
+
+@login_required
+def edit_profile(request):
+    # Ensure the logged-in user always has a profile row
+    profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        form = AuthorProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            # after saving, go to public profile page
+            return redirect("public_author_profile", username=request.user.username)
+    else:
+        form = AuthorProfileForm(instance=profile)
+
+    return render(request, "socialdistribution/edit_profile.html", {
+        "form": form,
+        "profile": profile,
+    })
 
 
 
