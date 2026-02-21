@@ -1,0 +1,101 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f7fb;
+  color: #111827;
+}
+
+.navbar {
+  background: #0f172a;
+  color: white;
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user {
+  opacity: 0.9;
+}
+
+.link {
+  color: white;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.link:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.container {
+  padding: 40px 20px;
+}
+
+.card {
+  max-width: 460px;
+  margin: 60px auto;
+  background: white;
+  border-radius: 10px;
+  padding: 28px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.title {
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  margin: 0 0 18px 0;
+  color: #4b5563;
+}
+
+.form p {
+  margin-bottom: 14px;
+}
+
+.form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  margin-top: 6px;
+  box-sizing: border-box;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background: #1d4ed8;
+}
+
+.logout-form { margin: 0; }
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}

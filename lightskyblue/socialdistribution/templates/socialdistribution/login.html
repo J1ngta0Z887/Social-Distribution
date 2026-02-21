@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Login | lightskyblue{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1 class="title">Login</h1>
+    <p class="subtitle">Enter your username and password to continue.</p>
+
+    <form method="post" class="form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn" type="submit">Login</button>
+    </form>
+  </div>
+{% endblock %}
