@@ -6,7 +6,7 @@ body {
 }
 
 .navbar {
-  background: #0f172a;
+  background: #94ace5;
   color: white;
   padding: 14px 28px;
   display: flex;
@@ -80,14 +80,14 @@ body {
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
-  background: #2563eb;
+  background: #94ace5;
   color: white;
   cursor: pointer;
   font-weight: 600;
 }
 
 .btn:hover {
-  background: #1d4ed8;
+  background: #84a1e3;
 }
 
 .logout-form { margin: 0; }
