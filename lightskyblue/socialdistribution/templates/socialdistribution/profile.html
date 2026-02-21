@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'socialdistribution/css/profile.css' %}">
+{% endblock %}
+
+{% block title %}{{ profile.display_name|default:profile_user.username }} | Profile{% endblock %}
+
+{% block content %}
+  <div class="card profile-card">
+    <h1 class="title">
+      {{ profile.display_name|default:profile_user.username }}
+    </h1>
+
+    <p class="subtitle">@{{ profile_user.username }}</p>
+
+    {% if profile.bio %}
+      <p class="bio">{{ profile.bio }}</p>
+    {% else %}
+      <p class="bio muted">No bio yet.</p>
+    {% endif %}
+
+    <div class="links">
+      {% if profile.github_url %}
+        <a class="btn-outline" href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>
+      {% endif %}
+      {% if profile.website_url %}
+        <a class="btn-outline" href="{{ profile.website_url }}" target="_blank" rel="noopener">Website</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

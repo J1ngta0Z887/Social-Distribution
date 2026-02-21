@@ -1,12 +1,29 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
-from .models import Author
+from django.contrib.auth import get_user_model
+from .models import Author, AuthorProfile
 
 @login_required
 def home(request):
     return render(request, "socialdistribution/home.html")
+
+
+
+User = get_user_model()
+
+def public_author_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    profile, _ = AuthorProfile.objects.get_or_create(user=user)
+    return render(request, "socialdistribution/profile.html", {
+        "profile_user": user,
+        "profile": profile,
+    })
+
+
+
+
 
 
 @login_required

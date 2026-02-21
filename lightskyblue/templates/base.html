@@ -6,22 +6,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}LightSkyBlue{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
   <nav class="navbar">
     <div class="brand">lightskyblue</div>
 
     <div class="nav-right">
-      {% if user.is_authenticated %}
-        <span class="user">Hi, {{ user.username }}</span>
-        <form method="post" action="{% url 'logout' %}" class="logout-form">
+        {% if user.is_authenticated %}
+
+            <!-- Home button -->
+            <a class="link" href="{% url 'home' %}">Home</a>
+
+            <!-- Profile button -->
+            <a class="link" href="{% url 'public_author_profile' user.username %}">
+            My Profile
+            </a>
+
+            <span class="user">Hi, {{ user.username }}</span>
+
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
             {% csrf_token %}
             <button type="submit" class="link btn-link">Logout</button>
-        </form>
-      {% else %}
-        <a class="link" href="{% url 'login' %}">Login</a>
-      {% endif %}
+            </form>
+
+        {% else %}
+            <a class="link" href="{% url 'login' %}">Login</a>
+        {% endif %}
     </div>
+    
   </nav>
 
   <main class="container">

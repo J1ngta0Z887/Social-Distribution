@@ -1,0 +1,32 @@
+.profile-card {
+  max-width: 620px;
+}
+
+.bio {
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.links {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  text-decoration: none;
+  color: #111827;
+}
+
+.btn-outline:hover {
+  background: #f1f5f9;
+}
