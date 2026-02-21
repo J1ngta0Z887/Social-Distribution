@@ -1,0 +1,19 @@
+{% for a in authors %}
+  <div>
+    <span>{{ a.user.username }}</span>
+
+    {% if a.id != my_author.id %}
+      {% if my_author.is_following(a) %}
+        <form method="post" action="{% url 'unfollow_local_author' a.id %}">
+          {% csrf_token %}
+          <button type="submit">Unfollow</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'follow_local_author' a.id %}">
+          {% csrf_token %}
+          <button type="submit">Follow</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endfor %}
