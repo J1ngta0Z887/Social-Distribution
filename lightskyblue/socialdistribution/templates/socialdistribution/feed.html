@@ -1,0 +1,14 @@
+<h2>Following Feed</h2>
+
+{% if posts %}
+  {% for p in posts %}
+    <div>
+      <strong>{{ p.author.displayName }}</strong>
+      <p>{{ p.content }}</p>
+      <small>{{ p.published }}</small>
+    </div>
+    <hr>
+  {% endfor %}
+{% else %}
+  <p>You aren’t following anyone yet.</p>
+{% endif %}

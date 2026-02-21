@@ -1,7 +1,12 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
 
 class Author(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    host = models.URLField(default="http://127.0.0.1:8000")
+
     following = models.ManyToManyField(
         "self",
         symmetrical=False,

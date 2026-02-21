@@ -5,10 +5,21 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from .models import Author, AuthorProfile
 from .forms import AuthorProfileForm
+from .models import Author
+from django.shortcuts import render, get_object_or_404, redirect
 
 @login_required
 def home(request):
     return render(request, "socialdistribution/home.html")
+
+@login_required
+def authors_list(request):
+    me = get_object_or_404(Author, user=request.user)
+    authors = Author.objects.filter(host=me.host)  # local authors
+    return render(request, "socialdistribution/authors.html", {
+        "authors": authors,
+        "my_author": me
+    })
 
 
 
@@ -62,7 +73,7 @@ def follow_local_author(request, author_id):
         return HttpResponseBadRequest("Cannot follow yourself")
 
     me.following.add(target)
-    return JsonResponse({"ok": True, "following": True, "target": str(target.id)})
+    return redirect({"ok": True, "following": True, "target": str(target.id)})
 
 @login_required
 def unfollow_local_author(request, author_id):
@@ -73,5 +84,15 @@ def unfollow_local_author(request, author_id):
     target = get_object_or_404(Author, id=author_id)
 
     me.following.remove(target)
-    return JsonResponse({"ok": True, "following": False, "target": str(target.id)})
+    return redirect({"ok": True, "following": False, "target": str(target.id)})
 
+@login_required
+def following_feed(request):
+    me = get_object_or_404(Author, user=request.user)
+    following_ids = me.following.values_list("id", flat=True)
+
+    posts = Post.objects.filter(author__id__in=following_ids).order_by("-published")
+    return render(request, "socialdistribution/following_feed.html", {
+        "posts": posts,
+        "my_author": me
+    })
