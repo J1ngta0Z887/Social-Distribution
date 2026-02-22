@@ -9,25 +9,42 @@
 
 {% block content %}
   <div class="card profile-card">
-    <h1 class="title">
-      {{ profile.display_name|default:profile_user.username }}
-    </h1>
 
-    <p class="subtitle">@{{ profile_user.username }}</p>
-
-    {% if profile.bio %}
-      <p class="bio">{{ profile.bio }}</p>
-    {% else %}
-      <p class="bio muted">No bio yet.</p>
+    {% if request.user.is_authenticated and request.user == profile_user %}
+      <div class="actions">
+        <a class="btn-outline" href="{% url 'edit_profile' %}">Edit Profile</a>
+      </div>
     {% endif %}
 
-    <div class="links">
-      {% if profile.github_url %}
-        <a class="btn-outline" href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>
-      {% endif %}
-      {% if profile.website_url %}
-        <a class="btn-outline" href="{{ profile.website_url }}" target="_blank" rel="noopener">Website</a>
-      {% endif %}
+    <div class="profile-layout">
+      <div class="profile-avatar">
+        {% if profile.picture_url %}
+          <img src="{{ profile.picture_url }}" alt="Profile Picture">
+        {% else %}
+          <img src="{% static 'socialdistribution/images/default-avatar.png' %}" alt="Default Profile Picture">
+        {% endif %}
+      </div>
+
+      <div class="profile-info">
+        <h1 class="title">
+          {{ profile.display_name|default:profile_user.username }}
+        </h1>
+
+        <p class="subtitle">@{{ profile_user.username }}</p>
+
+        <div class="links">
+          {% if profile.github_url %}
+            <a class="btn-outline" href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>
+          {% endif %}
+        </div>
+
+        {% if profile.bio %}
+          <p class="bio">{{ profile.bio }}</p>
+        {% else %}
+          <p class="bio muted">No bio yet.</p>
+        {% endif %}
+      </div>
     </div>
+
   </div>
 {% endblock %}

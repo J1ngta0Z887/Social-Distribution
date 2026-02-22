@@ -1,32 +1,116 @@
+/* Page background */
+body {
+  background-color: #f5f7fa;
+}
+
+/* Card */
 .profile-card {
-  max-width: 620px;
+  position: relative;
+  max-width: 950px;
+  width: 95%;
+  margin: 40px auto;
+  padding: 32px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
-.bio {
-  margin-top: 12px;
-  line-height: 1.5;
+/* Edit button top-right */
+.actions {
+  position: absolute;
+  top: 22px;
+  right: 22px;
 }
 
-.muted {
-  color: #6b7280;
-}
-
-.links {
-  margin-top: 18px;
+/* Layout: left image, right column */
+.profile-layout {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 28px;
 }
 
+/* Avatar */
+.profile-avatar img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #f0f0f0;
+}
+
+/* Right column */
+.profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* key: makes it a left-aligned column */
+}
+
+/* Name + username */
+.title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+
+.subtitle {
+  margin: 0 0 12px 0;
+  color: #666;
+}
+
+/* Bio */
+.bio {
+  margin: 14px 0 0 0;
+  line-height: 1.6;
+  color: #222;
+  max-width: 640px;
+}
+
+.bio.muted {
+  color: #999;
+}
+
+/* Minimal buttons (Edit + GitHub match) */
 .btn-outline {
   display: inline-block;
-  padding: 8px 12px;
+  padding: 8px 14px;
+  border: 1px solid #94ace5;
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  background: transparent;
+  color: #222;
   text-decoration: none;
-  color: #111827;
+  font-size: 0.9rem;
+  transition: 0.2s ease;
 }
 
 .btn-outline:hover {
-  background: #f1f5f9;
+  background: #94ace5;
+  color: #fff;
+}
+
+.links {
+  margin-top: 6px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .profile-card {
+    padding: 22px;
+  }
+
+  .profile-layout {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-info {
+    align-items: center; /* center on mobile */
+  }
+
+  .actions {
+    position: static;
+    margin-bottom: 14px;
+    text-align: center;
+  }
 }
