@@ -29,3 +29,34 @@ class AuthorProfile(models.Model):
 
     def __str__(self):
         return self.display_name or self.user.username
+    
+
+class Entry(models.Model):
+    VISIBILITY_CHOICES = [
+        ("PUBLIC", "Public"),
+        ("LOCAL", "Local"),
+        ("FRIENDS", "Friends"),
+        ("UNLISTED", "Unlisted"),
+    ]
+
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="entries")
+
+    title = models.CharField(max_length=200, blank=True)
+    content = models.TextField(blank=True)
+
+    image_url = models.URLField(blank=True)
+
+    visibility = models.CharField(
+        max_length=10,
+        choices=VISIBILITY_CHOICES,
+        default="LOCAL",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.author.user.username}: {self.title or 'Entry'}"

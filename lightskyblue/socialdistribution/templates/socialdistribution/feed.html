@@ -1,17 +1,44 @@
 {% extends "base.html" %}
-{% block content %}
-  <h1>Following Feed</h1>
-  <p>Posts from authors you follow will show here.</p>
 
-  {% if posts %}
-    {% for post in posts %}
-      <div class="card">
-        <p><strong>{{ post.author.user.username }}</strong></p>
-        <p>{{ post.content }}</p>
-        <small>{{ post.published }}</small>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No posts yet (or you aren’t following anyone).</p>
-  {% endif %}
+{% block title %}Feed{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1 class="title" style="margin:0;">Feed</h1>
+      <a class="btn-primary" href="{% url 'create_entry' %}">
+        + Create Entry
+      </a>
+    </div>
+
+    {% if entries %}
+      {% for entry in entries %}
+        <div class="card" style="margin:12px 0;">
+          <p style="margin:0 0 6px 0;">
+            <strong>
+              <a href="{% url 'public_author_profile' entry.author.user.username %}">
+                {{ entry.author.user.username }}
+              </a>
+            </strong>
+            <span class="subtitle"> · {{ entry.created_at }}</span>
+          </p>
+
+          {% if entry.title %}
+            <h3 style="margin:0 0 6px 0;">{{ entry.title }}</h3>
+          {% endif %}
+
+          {% if entry.content %}
+            <p style="margin:0 0 10px 0;">{{ entry.content }}</p>
+          {% endif %}
+
+          {% if entry.image_url %}
+            <img src="{{ entry.image_url }}" alt="entry image"
+                 style="max-width:100%; border-radius:10px;">
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="subtitle" style="margin-top:12px;">No entries yet.</p>
+    {% endif %}
+  </div>
 {% endblock %}

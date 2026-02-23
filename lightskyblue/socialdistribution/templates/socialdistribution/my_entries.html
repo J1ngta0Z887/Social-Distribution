@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}My Entries{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <h1 class="title" style="margin:0;">My Entries</h1>
+      <a class="btn-primary" href="{% url 'create_entry' %}">+ Create Entry</a>
+    </div>
+
+    {% if entries %}
+      <div style="margin-top:16px;">
+        {% for e in entries %}
+          <div class="card" style="margin:12px 0;">
+            {% if e.title %}<h3 style="margin:0 0 6px 0;">{{ e.title }}</h3>{% endif %}
+            {% if e.content %}<p style="margin:0 0 10px 0;">{{ e.content }}</p>{% endif %}
+
+            {% if e.image_url %}
+              <img src="{{ e.image_url }}" alt="entry image"
+                   style="max-width:100%; border-radius:10px;">
+            {% endif %}
+
+            <p class="subtitle" style="margin-top:10px;">{{ e.created_at }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="subtitle" style="margin-top:12px;">No entries yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

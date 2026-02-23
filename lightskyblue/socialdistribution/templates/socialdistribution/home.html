@@ -6,7 +6,21 @@
   <div class="card">
     <h1 class="title">Welcome to lightskyblue</h1>
     <p class="subtitle">You are logged in</p>
+
+    <p>
+      <a class="btn-primary" href="{% url 'create_entry' %}">
+        + Create Entry
+      </a>
+    </p>
+
+    <p>
+      <a class="btn-outline" href="{% url 'feed' %}">
+        View Feed
+      </a>
+    </p>
+
+    <hr>
+
     <p><a href="{% url 'authors_list' %}">View Local Authors</a></p>
-    <p><a href="{% url 'following_feed' %}">Following Feed</a></p>
   </div>
 {% endblock %}
