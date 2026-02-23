@@ -1,14 +1,17 @@
-<h2>Following Feed</h2>
+{% extends "base.html" %}
+{% block content %}
+  <h1>Following Feed</h1>
+  <p>Posts from authors you follow will show here.</p>
 
-{% if posts %}
-  {% for p in posts %}
-    <div>
-      <strong>{{ p.author.displayName }}</strong>
-      <p>{{ p.content }}</p>
-      <small>{{ p.published }}</small>
-    </div>
-    <hr>
-  {% endfor %}
-{% else %}
-  <p>You aren’t following anyone yet.</p>
-{% endif %}
+  {% if posts %}
+    {% for post in posts %}
+      <div class="card">
+        <p><strong>{{ post.author.user.username }}</strong></p>
+        <p>{{ post.content }}</p>
+        <small>{{ post.published }}</small>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No posts yet (or you aren’t following anyone).</p>
+  {% endif %}
+{% endblock %}

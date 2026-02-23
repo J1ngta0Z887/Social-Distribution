@@ -3,7 +3,7 @@
     <span>{{ a.user.username }}</span>
 
     {% if a.id != my_author.id %}
-      {% if my_author.is_following(a) %}
+      {% if a in my_author.following.all %}
         <form method="post" action="{% url 'unfollow_local_author' a.id %}">
           {% csrf_token %}
           <button type="submit">Unfollow</button>
