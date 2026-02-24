@@ -15,4 +15,6 @@ urlpatterns = [
     path("entries/", views.my_entries, name="my_entries"),
     path("entries/new/", views.create_entry, name="create_entry"),
     path("authors/<int:author_id>/entries/", views.author_entries, name="author_entries"),
+    path('entries/<int:entry_id>/edit/', views.edit_entry, name='edit_entry'),
+    path('entries/<int:entry_id>/delete/', views.delete_entry, name='delete_entry'),
 ]

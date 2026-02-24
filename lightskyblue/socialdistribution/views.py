@@ -170,3 +170,41 @@ def edit_profile(request):
         "form": form,
         "profile": profile,
     })
+
+@login_required
+def edit_entry(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id)
+
+    # Task 13: Security Check - Other authors cannot modify my entries
+    # We compare the Entry's author's user to the Request's user
+    if entry.author.user != request.user:
+        return HttpResponseForbidden("You are not the author of this entry.")
+
+    if request.method == "POST":
+        form = EntryForm(request.POST, instance=entry)
+        if form.is_valid():
+            form.save()
+            return redirect("my_entries") # Redirects to the list of user's entries
+    else:
+        form = EntryForm(instance=entry)
+
+    # Reusing the create_entry template, or you can make a specific edit_entry.html
+    return render(request, "socialdistribution/create_entry.html", {
+        "form": form,
+        "title": "Edit Entry"
+    })
+
+@login_required
+def delete_entry(request, entry_id):
+    entry = get_object_or_404(Entry, id=entry_id)
+
+    # Task 13: Security Check
+    if entry.author.user != request.user:
+        return HttpResponseForbidden("You are not the author of this entry.")
+
+    if request.method == "POST":
+        entry.delete()
+        return redirect("my_entries")
+
+    # Task 23: Author can see entry before deletion (It's passed in context)
+    return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
