@@ -39,6 +39,17 @@ class Entry(models.Model):
         ("UNLISTED", "Unlisted"),
     ]
 
+    CONTENT_TYPE_CHOICES = [
+        ("text/markdown", "CommonMark"),
+        ("text/plain", "Plain Text"),
+    ]
+
+    content_type = models.CharField(
+        max_length=20,
+        choices=CONTENT_TYPE_CHOICES,
+        default="text/plain"
+    )
+
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="entries")
 
     title = models.CharField(max_length=200, blank=True)
