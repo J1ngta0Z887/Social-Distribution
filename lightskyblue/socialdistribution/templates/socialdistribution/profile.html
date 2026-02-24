@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load social_extras %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'socialdistribution/css/profile.css' %}">
@@ -48,3 +49,36 @@
 
   </div>
 {% endblock %}
+
+{% load social_extras %} <div class="profile-entries" style="margin-top: 20px;">
+  <h2>Entries</h2>
+  {% if entries %}
+    {% for entry in entries %}
+      <div class="card" style="margin:12px 0;">
+        {% if entry.title %}<h3 style="margin:0 0 6px 0;">{{ entry.title }}</h3>{% endif %}
+
+        {% if entry.content %}
+          <div style="margin:0 0 10px 0;">{{ entry|render_entry }}</div>
+        {% endif %}
+
+        {% if entry.image_url %}
+          <img src="{{ entry.image_url }}" alt="entry image" style="max-width:100%; border-radius:10px;">
+        {% endif %}
+
+        <p class="subtitle" style="margin-top:10px;">{{ entry.created_at }}</p>
+
+        {% if entry.author.user == request.user %}
+          <div style="margin-top: 10px;">
+            <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+            <form method="post" action="{% url 'delete_entry' entry.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">Delete</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="subtitle">No entries yet.</p>
+  {% endif %}
+</div>

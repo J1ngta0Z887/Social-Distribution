@@ -12,7 +12,7 @@ class AuthorProfileForm(forms.ModelForm):
 class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
-        fields = ["title", "content", "image_url", "visibility"]
+        fields = ["title", "content", "image_url", "visibility", "content_type"]
         widgets = {
             "content": forms.Textarea(attrs={"rows": 4}),
         }

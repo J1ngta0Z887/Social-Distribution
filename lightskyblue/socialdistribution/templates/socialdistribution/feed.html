@@ -28,12 +28,22 @@
           {% endif %}
 
           {% if entry.content %}
-            <p style="margin:0 0 10px 0;">{{ entry.content }}</p>
+            <div style="margin:0 0 10px 0;">{{ entry|render_entry }}</div>
           {% endif %}
 
           {% if entry.image_url %}
             <img src="{{ entry.image_url }}" alt="entry image"
                  style="max-width:100%; border-radius:10px;">
+          {% endif %}
+
+          {% if entry.author.user == request.user %}
+            <div style="margin-top: 10px;">
+              <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+              <form method="post" action="{% url 'delete_entry' entry.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">Delete</button>
+              </form>
+            </div>
           {% endif %}
         </div>
       {% endfor %}

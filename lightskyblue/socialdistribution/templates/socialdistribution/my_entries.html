@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load social_extras %}
 
 {% block title %}My Entries{% endblock %}
 
@@ -14,7 +15,10 @@
         {% for e in entries %}
           <div class="card" style="margin:12px 0;">
             {% if e.title %}<h3 style="margin:0 0 6px 0;">{{ e.title }}</h3>{% endif %}
-            {% if e.content %}<p style="margin:0 0 10px 0;">{{ e.content }}</p>{% endif %}
+
+            {% if e.content %}
+              <div style="margin:0 0 10px 0;">{{ e|render_entry }}</div>
+            {% endif %}
 
             {% if e.image_url %}
               <img src="{{ e.image_url }}" alt="entry image"
@@ -22,6 +26,14 @@
             {% endif %}
 
             <p class="subtitle" style="margin-top:10px;">{{ e.created_at }}</p>
+
+            <div style="margin-top: 10px;">
+              <a href="{% url 'edit_entry' e.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+              <form method="post" action="{% url 'delete_entry' e.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">Delete</button>
+              </form>
+            </div>
           </div>
         {% endfor %}
       </div>
