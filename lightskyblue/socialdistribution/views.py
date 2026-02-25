@@ -135,15 +135,15 @@ def public_author_profile(request, username):
 
     me, _ = Author.objects.get_or_create(user=request.user)
 
-    # Optional local-only rule
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
 
-    entries = Entry.objects.filter(author=author).order_by("-created_at")
-
-    # Optional: hide unlisted unless it's your own profile
-    if request.user != user:
-        entries = entries.exclude(visibility="UNLISTED")
+    # If it's your own profile, show all your entries (optional)
+    if request.user == user:
+        entries = Entry.objects.filter(author=author).order_by("-created_at")
+    else:
+        # Non-followers (and everyone else) only see PUBLIC posts
+        entries = Entry.objects.filter(author=author, visibility="PUBLIC").order_by("-created_at")
 
     return render(request, "socialdistribution/profile.html", {
         "profile_user": user,
