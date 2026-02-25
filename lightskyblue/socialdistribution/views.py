@@ -115,12 +115,15 @@ def feed(request):
 
     following_ids = list(me.following.values_list("id", flat=True))
     following_ids.append(me.id)
+    friend_ids = list(me.following.filter(following=me).values_list("id", flat=True))
 
+    #allows viewing of all public entries and unlisted/friends-only entries of authors you are following
     entries = Entry.objects.filter(
         author__host=me.host
     ).filter(
         Q(visibility="PUBLIC") |
-        Q(visibility__in=["UNLISTED", "FRIENDS"], author__id__in=following_ids)
+        Q(visibility="UNLISTED", author__id__in=following_ids) |
+        Q(visibility="FRIENDS", author__id__in=friend_ids)
     ).order_by("-created_at")
 
     return render(request, "socialdistribution/feed.html", {

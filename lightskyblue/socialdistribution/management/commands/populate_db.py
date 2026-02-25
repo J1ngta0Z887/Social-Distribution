@@ -15,9 +15,9 @@ class Command(BaseCommand):
         ]
 
         entries_data = [
-            {'title': 'First Post', 'content': 'This is my first post on the platform!'},
-            {'title': 'Second Post', 'content': 'Sharing my thoughts on technology and design.'},
-            {'title': 'Third Post', 'content': 'Check out this interesting development I discovered.'},
+            {'title': 'First Post', 'content': 'This is my friends post!'},
+            {'title': 'Second Post', 'content': 'This is my public post.'},
+            {'title': 'Third Post', 'content': 'This is my unlisted post'},
         ]
 
         for author_info in authors_data:

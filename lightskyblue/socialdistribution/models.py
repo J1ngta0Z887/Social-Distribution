@@ -16,7 +16,12 @@ class Author(models.Model):
 
     def is_following(self, other_author) -> bool:
         return self.following.filter(id=other_author.id).exists()
-    
+
+    def is_friends_with(self,other_author) -> bool:
+        return (
+            self.following.filter(id=other_author.id).exists() and
+            other_author.following.filter(id=self.id).exists()
+        )
 
 class AuthorProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
