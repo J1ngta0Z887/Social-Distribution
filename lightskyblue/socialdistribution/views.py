@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from .models import Author, AuthorProfile, Entry
 from .forms import AuthorProfileForm, EntryForm
 from django.views.decorators.http import require_POST
@@ -116,14 +117,10 @@ def feed(request):
     following_ids.append(me.id)
 
     entries = Entry.objects.filter(
-        author__id__in=following_ids,
         author__host=me.host
-    ).exclude(
-        visibility="UNLISTED"
-    ).prefetch_related(
-        "likes",
-        "comments__author",
-        "comments__likes",
+    ).filter(
+        Q(visibility="PUBLIC") |
+        Q(visibility__in=["UNLISTED", "FRIENDS"], author__id__in=following_ids)
     ).order_by("-created_at")
 
     return render(request, "socialdistribution/feed.html", {
