@@ -17,4 +17,8 @@ urlpatterns = [
     path("authors/<int:author_id>/entries/", views.author_entries, name="author_entries"),
     path('entries/<int:entry_id>/edit/', views.edit_entry, name='edit_entry'),
     path('entries/<int:entry_id>/delete/', views.delete_entry, name='delete_entry'),
+    path("entries/<int:entry_id>/comment/", views.add_comment, name="add_comment"),
+    path("entries/<int:entry_id>/like/", views.toggle_entry_like, name="toggle_entry_like"),
+    path("comments/<int:comment_id>/like/", views.toggle_comment_like, name="toggle_comment_like"),
+    path("entries/<int:entry_id>/comment/", views.add_comment, name="add_comment"),
 ]

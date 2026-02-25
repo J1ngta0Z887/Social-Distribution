@@ -65,9 +65,25 @@ class Entry(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(Author, related_name="liked_entries", blank=True)
+
 
     class Meta:
         ordering = ["-created_at"]
 
+
     def __str__(self):
         return f"{self.author.user.username}: {self.title or 'Entry'}"
+
+    
+
+class Comment(models.Model):
+    entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="comments")
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    likes = models.ManyToManyField(Author, related_name="liked_comments", blank=True)
+
+    class Meta:
+        ordering = ["created_at"]

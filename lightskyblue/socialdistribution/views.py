@@ -4,6 +4,12 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from .models import Author, AuthorProfile, Entry
 from .forms import AuthorProfileForm, EntryForm
+from django.views.decorators.http import require_POST
+from .models import Comment
+
+from .forms import CommentForm
+
+
 
 
 @login_required
@@ -87,14 +93,11 @@ def author_entries(request, author_id):
     me, _ = Author.objects.get_or_create(user=request.user)
     author = get_object_or_404(Author, id=author_id)
 
-    # local-only constraint (fits your "local authors" story)
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors' entries")
 
-    # show visibility rules (simple version)
     qs = Entry.objects.filter(author=author).order_by("-created_at")
 
-    # If you're not the author, hide UNLISTED (optional)
     if me.id != author.id:
         qs = qs.exclude(visibility="UNLISTED")
 
@@ -110,21 +113,23 @@ def feed(request):
     me, _ = Author.objects.get_or_create(user=request.user)
 
     following_ids = list(me.following.values_list("id", flat=True))
-    following_ids.append(me.id)  # include my own posts
+    following_ids.append(me.id)
 
     entries = Entry.objects.filter(
         author__id__in=following_ids,
         author__host=me.host
     ).exclude(
         visibility="UNLISTED"
+    ).prefetch_related(
+        "likes",
+        "comments__author",
+        "comments__likes",
     ).order_by("-created_at")
 
     return render(request, "socialdistribution/feed.html", {
         "my_author": me,
         "entries": entries,
     })
-
-User = get_user_model()
 
 
 @login_required
@@ -135,13 +140,11 @@ def public_author_profile(request, username):
 
     me, _ = Author.objects.get_or_create(user=request.user)
 
-    # Optional local-only rule
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
 
     entries = Entry.objects.filter(author=author).order_by("-created_at")
 
-    # Optional: hide unlisted unless it's your own profile
     if request.user != user:
         entries = entries.exclude(visibility="UNLISTED")
 
@@ -208,3 +211,69 @@ def delete_entry(request, entry_id):
 
     # Task 23: Author can see entry before deletion (It's passed in context)
     return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
+
+def can_access_entry(me: Author, entry: Entry) -> bool:
+    if entry.author.host != me.host:
+        return False
+    if entry.visibility == "UNLISTED":
+        return False
+    allowed_ids = set(me.following.values_list("id", flat=True))
+    allowed_ids.add(me.id)
+    return entry.author_id in allowed_ids
+
+
+@require_POST
+@login_required
+def add_comment(request, entry_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    entry = get_object_or_404(Entry, id=entry_id)
+
+    if not can_access_entry(me, entry):
+        return HttpResponseForbidden("You cannot comment on this entry.")
+
+    form = CommentForm(request.POST)
+    if not form.is_valid():
+        return HttpResponseBadRequest("Invalid comment.")
+
+    comment = form.save(commit=False)
+    comment.entry = entry
+    comment.author = me
+    comment.save()
+
+    return redirect(request.POST.get("next") or "feed")
+
+
+@require_POST
+@login_required
+def toggle_entry_like(request, entry_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    entry = get_object_or_404(Entry, id=entry_id)
+
+    if not can_access_entry(me, entry):
+        return HttpResponseForbidden("You cannot like this entry.")
+
+    if entry.likes.filter(id=me.id).exists():
+        entry.likes.remove(me)
+    else:
+        entry.likes.add(me)
+
+    return redirect(request.POST.get("next") or "feed")
+
+
+@require_POST
+@login_required
+def toggle_comment_like(request, comment_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    comment = get_object_or_404(Comment, id=comment_id)
+    entry = comment.entry
+
+    # same access rule as the entry
+    if not can_access_entry(me, entry):
+        return HttpResponseForbidden("You cannot like this comment.")
+
+    if comment.likes.filter(id=me.id).exists():
+        comment.likes.remove(me)
+    else:
+        comment.likes.add(me)
+
+    return redirect(request.POST.get("next") or "feed")
