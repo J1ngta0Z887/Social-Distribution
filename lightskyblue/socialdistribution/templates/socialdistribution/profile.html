@@ -48,9 +48,8 @@
     </div>
 
   </div>
-{% endblock %}
 
-{% load social_extras %} <div class="profile-entries" style="margin-top: 20px;">
+<div class="profile-entries" style="margin-top: 20px;">
   <h2>Entries</h2>
   {% if entries %}
     {% for entry in entries %}
@@ -81,4 +80,8 @@
   {% else %}
     <p class="subtitle">No entries yet.</p>
   {% endif %}
+
+
 </div>
+{% endblock %}
+
