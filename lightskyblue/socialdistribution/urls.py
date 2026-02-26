@@ -16,6 +16,7 @@ urlpatterns = [
     path("entries/", html_views.my_entries, name="my_entries"),
     path("entries/new/", html_views.create_entry, name="create_entry"),
     path("authors/<int:author_id>/entries/", html_views.author_entries, name="author_entries"),
+    path("entries/<int:entry_id>/", html_views.view_entry, name="view_entry"),
     path('entries/<int:entry_id>/edit/', html_views.edit_entry, name='edit_entry'),
     path('entries/<int:entry_id>/delete/', html_views.delete_entry, name='delete_entry'),
     path("entries/<int:entry_id>/comment/", html_views.add_comment, name="add_comment"),

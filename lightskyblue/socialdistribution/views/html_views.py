@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from socialdistribution.models import Author, AuthorProfile, Entry, Comment
 from socialdistribution.forms import AuthorProfileForm, EntryForm, CommentForm
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 
 
@@ -94,10 +94,7 @@ def author_entries(request, author_id):
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors' entries")
 
-    qs = Entry.objects.filter(author=author).order_by("-created_at")
-
-    if me.id != author.id:
-        qs = qs.exclude(visibility="UNLISTED")
+    qs = Entry.objects.filter(author=author, visibility = "PUBLIC").order_by("-created_at")
 
     return render(request, "socialdistribution/author_entries.html", {
         "my_author": me,
@@ -110,9 +107,9 @@ def author_entries(request, author_id):
 def feed(request):
     me, _ = Author.objects.get_or_create(user=request.user)
 
-    following_ids = list(me.following.values_list("id", flat=True))
-    following_ids.append(me.id)
-    friend_ids = list(me.following.filter(following=me).values_list("id", flat=True))
+    following_ids = set(me.following.values_list("id", flat=True))
+    following_ids.add(me.id)
+    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
 
     #allows viewing of all public entries and unlisted/friends-only entries of authors you are following
     entries = Entry.objects.filter(
@@ -215,12 +212,12 @@ def delete_entry(request, entry_id):
 def can_access_entry(me: Author, entry: Entry) -> bool:
     if entry.author.host != me.host:
         return False
-    if entry.visibility == "UNLISTED":
-        return False
     allowed_ids = set(me.following.values_list("id", flat=True))
-    allowed_ids.add(me.id)
-    return entry.author_id in allowed_ids
-
+    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
+    if entry.visibility == "FRIENDS":
+        return entry.author_id in friend_ids
+    else:
+        return entry.author_id in allowed_ids
 
 @require_POST
 @login_required
@@ -277,3 +274,18 @@ def toggle_comment_like(request, comment_id):
         comment.likes.add(me)
 
     return redirect(request.POST.get("next") or "feed")
+
+@require_GET
+@login_required
+def view_entry(request, entry_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    entry = get_object_or_404(Entry, id=entry_id)
+    
+    # Check if user can access this entry
+    if not can_access_entry(me, entry):
+        return HttpResponseForbidden("You cannot view this entry.")
+    
+    return render(request, "socialdistribution/view_entry.html", {
+        "entry": entry,
+        "my_author": me,
+    })
