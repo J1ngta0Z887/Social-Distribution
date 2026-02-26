@@ -134,6 +134,7 @@ def feed(request):
 
 @login_required
 def public_author_profile(request, username):
+    User = get_user_model()
     user = get_object_or_404(User, username=username)
     profile, _ = AuthorProfile.objects.get_or_create(user=user)
     author = get_object_or_404(Author, user=user)
