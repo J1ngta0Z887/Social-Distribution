@@ -26,3 +26,6 @@ media/
 
 # Windows
 Thumbs.db
+
+# IDE
+.idea
