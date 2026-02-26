@@ -3,12 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from .models import Author, AuthorProfile, Entry
-from .forms import AuthorProfileForm, EntryForm
+from socialdistribution.models import Author, AuthorProfile, Entry, Comment
+from socialdistribution.forms import AuthorProfileForm, EntryForm, CommentForm
 from django.views.decorators.http import require_POST
-from .models import Comment
-
-from .forms import CommentForm
 
 
 
