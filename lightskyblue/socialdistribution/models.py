@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
-
 class Author(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -39,7 +38,6 @@ class AuthorProfile(models.Model):
 class Entry(models.Model):
     VISIBILITY_CHOICES = [
         ("PUBLIC", "Public"),
-        ("LOCAL", "Local"),
         ("FRIENDS", "Friends"),
         ("UNLISTED", "Unlisted"),
     ]
@@ -65,11 +63,11 @@ class Entry(models.Model):
     visibility = models.CharField(
         max_length=10,
         choices=VISIBILITY_CHOICES,
-        default="LOCAL",
+        default="PUBLIC",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
     likes = models.ManyToManyField(Author, related_name="liked_entries", blank=True)
 
 

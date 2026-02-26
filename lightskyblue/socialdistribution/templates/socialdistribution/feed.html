@@ -20,7 +20,7 @@
                 {{ entry.author.user.username }}
               </a>
             </strong>
-            <span class="subtitle"> · {{ entry.created_at }}</span>
+            <span class="subtitle"> · {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}</span>
           </p>
 
           {% if entry.title %}
