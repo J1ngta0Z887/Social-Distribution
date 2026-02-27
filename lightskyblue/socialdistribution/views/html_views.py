@@ -40,7 +40,7 @@ def follow_local_author(request, author_id):
         return HttpResponseBadRequest("Cannot follow yourself")
 
     me.following.add(target)
-    return redirect("authors_list")
+    return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
 
 @login_required
@@ -52,7 +52,7 @@ def unfollow_local_author(request, author_id):
     target = get_object_or_404(Author, id=author_id)
 
     me.following.remove(target)
-    return redirect("authors_list")
+    return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
 
 
@@ -210,6 +210,8 @@ def delete_entry(request, entry_id):
     return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
 
 def can_access_entry(me: Author, entry: Entry) -> bool:
+    if (entry.author == me or entry.visibility == "PUBLIC"):
+        return True
     if entry.author.host != me.host:
         return False
     allowed_ids = set(me.following.values_list("id", flat=True))

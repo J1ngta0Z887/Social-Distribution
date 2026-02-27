@@ -14,17 +14,35 @@
     {% if entries %}
       {% for entry in entries %}
         <div class="card" style="margin:12px 0;">
-          <p style="margin:0 0 6px 0;">
-            <strong>
-              <a href="{% url 'public_author_profile' entry.author.user.username %}">
-                {{ entry.author.user.username }}
-              </a>
-            </strong>
-            <span class="subtitle"> · {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}</span>
-          </p>
+          <div style="margin:0 0 6px 0;">
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px;">
+              <strong>
+                <a href="{% url 'public_author_profile' entry.author.user.username %}">{{ entry.author.user.username }}</a>
+              </strong>
+              {% if entry.author.user != request.user %}
+                <span style="color:#4b5563;">·</span>
+                {% if my_author|is_following:entry.author %}
+                  <form method="post" action="{% url 'unfollow_local_author' entry.author.id %}" style="display:inline; margin:0;">
+                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">unfollow</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'follow_local_author' entry.author.id %}" style="display:inline; margin:0;">
+                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">follow</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </div>
+            <div style="color:#4b5563; font-size:0.85em; margin-top:1em;">
+              {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}
+            </div>
+          </div>
 
           {% if entry.title %}
-            <h3 style="margin:0 0 6px 0;">{{ entry.title }}</h3>
+            <h3 style="margin:0 0 6px 0;">
+              <a href="{% url 'view_entry' entry.id %}" style="text-decoration: underline; color: #0d6efd; cursor: pointer;">
+                {{ entry.title }}
+              </a>
+            </h3>
           {% endif %}
 
           {% if entry.content %}

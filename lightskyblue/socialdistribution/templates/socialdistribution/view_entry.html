@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load social_extras %}
+{% block title %}{{ entry.title|default:"Entry" }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <a href="{% url 'feed' %}" style="text-decoration: none; color: #0d6efd; cursor: pointer;">← Back to Feed</a>
+    </div>
+
+    <div class="card" style="margin:0;">
+      <p style="margin:0 0 6px 0;">
+        <strong>
+          <a href="{% url 'public_author_profile' entry.author.user.username %}">
+            {{ entry.author.user.username }}
+          </a>
+        </strong>
+        <span class="subtitle"> · {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}</span>
+      </p>
+
+      {% if entry.title %}
+        <h1 style="margin:12px 0 6px 0;">{{ entry.title }}</h1>
+      {% endif %}
+
+      {% if entry.content %}
+        <div style="margin:0 0 10px 0; font-size: 16px; line-height: 1.6;">{{ entry|render_entry }}</div>
+      {% endif %}
+
+      {% if entry.image_url %}
+        <img src="{{ entry.image_url }}" alt="entry image"
+             style="max-width:100%; border-radius:10px; margin:15px 0;">
+      {% endif %}
+
+      <div style="margin-top:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <form method="post" action="{% url 'toggle_entry_like' entry.id %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" class="btn-primary" style="background-color:#0d6efd; border:none; cursor:pointer;">
+            {% if my_author in entry.likes.all %}Unlike{% else %}Like{% endif %}
+            ({{ entry.likes.count }})
+          </button>
+        </form>
+
+        {% if entry.author.user == request.user %}
+          <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+
+          <form method="post" action="{% url 'delete_entry' entry.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">
+              Delete
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      <hr style="margin:15px 0;">
+
+      <div style="margin-top:15px;">
+        <h3 style="margin:0 0 12px 0;">Comments ({{ entry.comments.count }})</h3>
+
+        {% for c in entry.comments.all %}
+          <div style="padding:10px 12px; border-radius:10px; background:#f7f7f7; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+              <div style="flex: 1;">
+                <strong>
+                  <a href="{% url 'public_author_profile' c.author.user.username %}" style="text-decoration: none; color: inherit;">
+                    {{ c.author.user.username }}
+                  </a>
+                </strong>
+                <span class="subtitle"> · {{ c.created_at }}</span>
+                <div style="margin-top:6px;">{{ c.content }}</div>
+              </div>
+
+              <form method="post" action="{% url 'toggle_comment_like' c.id %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn-primary"
+                        style="background-color:#198754; border:none; cursor:pointer; padding:6px 10px; white-space: nowrap;">
+                  {% if my_author in c.likes.all %}Unlike{% else %}Like{% endif %}
+                  ({{ c.likes.count }})
+                </button>
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <p class="subtitle" style="margin:0 0 15px 0;">No comments yet. Be the first to comment!</p>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:20px;">
+        <h4 style="margin:0 0 12px 0;">Leave a Comment</h4>
+        <form method="post" action="{% url 'add_comment' entry.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <textarea name="content"
+                    rows="3"
+                    required
+                    placeholder="Write your comment..."
+                    style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px; font-family: inherit; font-size: 14px;"></textarea>
+          <button type="submit" class="btn-primary" style="border:none; cursor:pointer;">
+            Post Comment
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}
