@@ -23,6 +23,13 @@ class Author(models.Model):
             models.UniqueConstraint(fields=["display_name", "host"], name="unique_display_name_host")
         ]
 
+    def update_profile(self, new_data):
+        self.display_name = new_data.get("displayName", self.display_name)
+        self.bio = new_data.get("bio", self.bio)
+        self.github_url = new_data.get("github", self.github_url)
+        self.picture_url = new_data.get("profileImage", self.picture_url)
+        self.save()
+
     def is_friends_with(self, other: Self):
         if other is None:
             return False
