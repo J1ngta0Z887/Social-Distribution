@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from socialdistribution.utils import new_events
 from socialdistribution.models import Author, AuthorProfile, Entry, Comment
 from socialdistribution.forms import AuthorProfileForm, EntryForm, CommentForm
 from django.views.decorators.http import require_POST, require_GET
@@ -12,6 +13,13 @@ from django.views.decorators.http import require_POST, require_GET
 
 @login_required
 def home(request):
+    # update the announcement to show the latest github events for the user
+    me, _ = Author.objects.get_or_create(user=request.user)
+    profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+    if profile.github_url:
+        # extract the username from the github url
+        username = profile.github_url.rstrip("/").split("/")[-1]
+        new_events(me, username)
     return render(request, "socialdistribution/home.html")
 
 

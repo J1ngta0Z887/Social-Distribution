@@ -90,3 +90,13 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ["created_at"]
+
+class ProcessedEvent(models.Model):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="processed_events")
+    event_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['author', 'event_id'], name='unique_author_event')
+        ]
