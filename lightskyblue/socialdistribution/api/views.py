@@ -48,18 +48,6 @@ class AuthorsAPI(View):
 
         return JsonResponse(resp)
 
-    def put(self, req: HTTPResponse):
-        user = req.user
-        if not user.is_authenticated:
-            return JsonResponse({}, status=401)
-
-        author = Author.objects.get(user=user)
-        if not author:
-            return JsonResponse({}, status=404)
-
-        self.update_profile(req, req.PUT)
-        return JsonResponse(author.serialize(), safe=True)
-
 # per https://uofa-cmput404.github.io/general/project.html#single-author-api
 class AuthorAPI(View):
     def _pull(self, author_id) -> Author:
@@ -70,4 +58,16 @@ class AuthorAPI(View):
             author = self._pull(author_id)
         except ObjectDoesNotExist:
             return JsonResponse({})
+        return JsonResponse(author.serialize(), safe=True)
+
+    def put(self, req: HTTPResponse):
+        user = req.user
+        if not user.is_authenticated:
+            return JsonResponse({}, status=401)
+
+        author = Author.objects.get(user=user)
+        if not author:
+            return JsonResponse({}, status=404)
+
+        self.update_profile(req, req.PUT)
         return JsonResponse(author.serialize(), safe=True)
