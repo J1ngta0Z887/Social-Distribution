@@ -8,7 +8,8 @@ class Author(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=80, blank=True)
     host = models.URLField(default="http://127.0.0.1:8000")
-    bio = models.TextField(blank=True)
+    # the max length is arbitrary, just went for size near old tweets max length
+    bio = models.TextField(max_length=160, blank=True)
     github_url = models.URLField(blank=True)
     picture_url = models.URLField(blank=True)
     following = models.ManyToManyField(
@@ -37,6 +38,7 @@ class Author(models.Model):
         author["id"] = f"{self.host}/api/authors/{self.pk}"
         author["host"] = f"{self.host}/api/"
         author["displayName"] = self.display_name
+        author["bio"] = self.bio
         author["github"] = self.github_url
         author["profileImage"] = self.picture_url
         author["web"] = f"{self.host}/author/{self.display_name}"

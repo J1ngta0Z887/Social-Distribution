@@ -15,7 +15,7 @@ from ..models import Author
 
 
 # per https://uofa-cmput404.github.io/general/project.html#authors-api
-class AuthorsView(View):
+class AuthorsAPI(View):
 
     def _pull(self):
         return Author.objects.all()
@@ -38,6 +38,9 @@ class AuthorsView(View):
 
         resp = {}
         resp["type"] = "authors"
+        # we add the page number and size here for easier debugging
+        resp["page"] = page.number
+        resp["size"] = page.paginator.per_page
         resp["authors"] = []
         for author in page.object_list:
             resp["authors"].append(author.serialize())

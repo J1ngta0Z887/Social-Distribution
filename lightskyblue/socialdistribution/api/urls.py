@@ -2,10 +2,10 @@
 
 from django.urls import path
 from . import views
-from .views import AuthorsView, AuthorAPI
+from .views import AuthorsAPI, AuthorAPI
 
 urlpatterns = [
     #
-    path("authors", AuthorsView.as_view()),
+    path("authors", AuthorsAPI.as_view()),
     path("author/<int:author_id>", AuthorAPI.as_view())
 ]
