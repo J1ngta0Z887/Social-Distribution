@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.creds
+
 # Virtual Environment
 venv/
 env/
@@ -20,6 +22,8 @@ media/
 
 # VSCode
 .vscode/
+
+.idea/
 
 # Mac
 .DS_Store
