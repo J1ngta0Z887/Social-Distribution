@@ -26,4 +26,7 @@ urlpatterns = [
 
     #API endpoints
     #path("api/authors/<int:author_id>/entries/<int:entry_id>/", api_views.get_entry, name="api_get_entry"),
+    path("follow-requests/", html_views.follow_requests, name="follow_requests"),
+    path("follow-requests/<int:request_id>/handle/", html_views.handle_follow_request, name="handle_follow_request"),
+
 ]

@@ -22,7 +22,12 @@
             <a class="link" href="{% url 'public_author_profile' user.username %}">
             My Profile
             </a>
-
+            <a class="link follow-requests-link" href="{% url 'follow_requests' %}">
+            Follow Requests
+            {% if unread_follow_requests_count > 0 %}
+              <span class="notif-badge">{{ unread_follow_requests_count }}</span>
+            {% endif %}
+            </a>
             <span class="user">Hi, {{ user.username }}</span>
 
             <form method="post" action="{% url 'logout' %}" class="logout-form">

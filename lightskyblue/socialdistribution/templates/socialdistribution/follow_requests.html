@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Follow Requests | lightskyblue{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1 class="title">Follow Requests</h1>
+
+    {% if follow_requests %}
+      <ul>
+        {% for fr in follow_requests %}
+          <li>
+            <a href="{% url 'public_author_profile' fr.from_author.user.username %}">
+              {{ fr.from_author.user.username }}
+            </a>
+            wants to follow you.
+            <form method="post" action="{% url 'handle_follow_request' fr.id %}" >
+              {% csrf_token %}
+              <button name="action" value="accept" class="btn-primary">Accept</button>
+              <button name="action" value="reject" class="btn-outline">Reject</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No follow requests at the moment.</p>
+    {% endif %}
+  </div>
+{% endblock %}
