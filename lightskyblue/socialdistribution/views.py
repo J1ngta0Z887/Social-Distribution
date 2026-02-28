@@ -3,8 +3,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from .models import Author, AuthorProfile, Entry
-from .forms import AuthorProfileForm, EntryForm
+from .models import Author, Entry
+from .forms import AuthorForm, EntryForm
 from django.views.decorators.http import require_POST
 from .models import Comment
 
@@ -134,9 +134,9 @@ def feed(request):
 
 @login_required
 def public_author_profile(request, username):
+    User = get_user_model()
     user = get_object_or_404(User, username=username)
-    profile, _ = AuthorProfile.objects.get_or_create(user=user)
-    author = get_object_or_404(Author, user=user)
+    author, _ = Author.objects.get_or_create(user=user)
 
     me, _ = Author.objects.get_or_create(user=request.user)
 
@@ -152,7 +152,6 @@ def public_author_profile(request, username):
 
     return render(request, "socialdistribution/profile.html", {
         "profile_user": user,
-        "profile": profile,
         "author": author,
         "entries": entries,
         "my_author": me,
@@ -161,19 +160,19 @@ def public_author_profile(request, username):
 
 @login_required
 def edit_profile(request):
-    profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+    author, _ = Author.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = AuthorProfileForm(request.POST, instance=profile)
+        form = AuthorForm(request.POST, instance=author)
         if form.is_valid():
             form.save()
             return redirect("public_author_profile", username=request.user.username)
     else:
-        form = AuthorProfileForm(instance=profile)
+        form = AuthorForm(instance=author)
 
     return render(request, "socialdistribution/edit_profile.html", {
         "form": form,
-        "profile": profile,
+        "author": author,
     })
 
 @login_required
@@ -217,8 +216,9 @@ def delete_entry(request, entry_id):
 def can_access_entry(me: Author, entry: Entry) -> bool:
     if entry.author.host != me.host:
         return False
-    if entry.visibility == "UNLISTED":
-        return False
+    # comment: we want to allow people to still view unlisted posts
+    # if entry.visibility == "UNLISTED":
+    #     return False
     allowed_ids = set(me.following.values_list("id", flat=True))
     allowed_ids.add(me.id)
     return entry.author_id in allowed_ids

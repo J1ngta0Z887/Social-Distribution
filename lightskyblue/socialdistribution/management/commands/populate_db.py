@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from socialdistribution.models import Author, AuthorProfile, Entry
+from socialdistribution.models import Author, Entry
 
 
 class Command(BaseCommand):
@@ -30,11 +30,12 @@ class Command(BaseCommand):
             # Create or get author
             author, _ = Author.objects.get_or_create(user=user)
 
-            # Create or get profile
-            profile, _ = AuthorProfile.objects.get_or_create(
-                user=user,
-                defaults={'display_name': author_info['display_name'], 'bio': author_info['bio']}
-            )
+            # Fill in author details
+            if not author.display_name:
+                author.display_name = author_info["display_name"]
+            if not author.bio:
+                author.bio = author_info["bio"]
+            author.save()
 
             # Create 3 entries for this author
             visibilities = ['FRIENDS', 'PUBLIC', 'UNLISTED']
