@@ -6,10 +6,11 @@ from http.client import HTTPResponse
 from urllib.request import Request
 
 from django.core.paginator import Paginator
+# ref: https://stackoverflow.com/questions/16181188/django-doesnotexist
+# just nicer for typing
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.views import View
-from django.views.generic import ListView
-from django.forms.models import model_to_dict
 from ..models import Author
 
 
@@ -45,12 +46,12 @@ class AuthorsView(View):
 
 # per https://uofa-cmput404.github.io/general/project.html#single-author-api
 class AuthorAPI(View):
-    def _pull(self, author_id):
+    def _pull(self, author_id) -> Author:
         return Author.objects.get(id=author_id)
 
     def get(self, req, author_id):
         try:
             author = self._pull(author_id)
-        except Author.DoesNotExist:
+        except ObjectDoesNotExist:
             return JsonResponse({})
         return JsonResponse(author.serialize(), safe=True)
