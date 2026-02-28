@@ -5,6 +5,7 @@
 from http.client import HTTPResponse
 
 from django.http import JsonResponse
+from django.views import View
 from django.views.generic import ListView
 from django.forms.models import model_to_dict
 from ..models import Author
@@ -20,3 +21,13 @@ class AuthorsView(ListView):
         #print(data.user.username)
         return JsonResponse(data, safe=False)
 
+class AuthorAPI(View):
+    def _pull(self, author_id):
+        return Author.objects.get(id=author_id)
+
+    def get(self, req, author_id):
+        try:
+            author = self._pull(author_id)
+        except Author.DoesNotExist:
+            return JsonResponse({})
+        return JsonResponse(author.serialize(), safe=True)
