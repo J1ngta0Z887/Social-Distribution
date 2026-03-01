@@ -4,7 +4,7 @@ from .views import html_views
 
 urlpatterns = [
     #HTML pages
-    path("", html_views.home, name="home"),
+    path("", html_views.feed, name="home"),
     path("login/", LoginView.as_view(template_name="socialdistribution/login.html"), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("author/<str:username>/", html_views.public_author_profile, name="public_author_profile"),
@@ -12,7 +12,7 @@ urlpatterns = [
     path("authors/", html_views.authors_list, name="authors_list"),
     path("authors/<int:author_id>/follow/", html_views.follow_local_author, name="follow_local_author"),
     path("authors/<int:author_id>/unfollow/", html_views.unfollow_local_author, name="unfollow_local_author"),
-    path("feed/", html_views.feed, name="feed"),
+    #path("feed/", html_views.feed, name="feed"),
     path("entries/", html_views.my_entries, name="my_entries"),
     path("entries/new/", html_views.create_entry, name="create_entry"),
     path("authors/<int:author_id>/entries/", html_views.author_entries, name="author_entries"),

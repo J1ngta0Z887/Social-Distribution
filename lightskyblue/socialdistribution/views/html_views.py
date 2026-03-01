@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 @login_required
 def home(request):
     # update the announcement to show the latest github events for the user
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     if me.github_url:
         # extract the username from the github url
         username = me.github_url.rstrip("/").split("/")[-1]
@@ -24,7 +24,7 @@ def home(request):
 
 @login_required
 def authors_list(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     authors = Author.objects.filter(host=me.host)
 
     q = request.GET.get("q")  # ← added
@@ -42,7 +42,7 @@ def follow_local_author(request, author_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     target = get_object_or_404(Author, id=author_id)
 
     if me.host != target.host:
@@ -61,7 +61,7 @@ def follow_local_author(request, author_id):
 
 @login_required
 def follow_requests(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     pending = FollowRequest.objects.filter(to_author=me, status="PENDING").select_related("from_author__user")
     pending.filter(seen_by_target=False).update(seen_by_target=True)
     return render(request, "socialdistribution/follow_requests.html", {
@@ -72,7 +72,7 @@ def follow_requests(request):
 @require_POST
 @login_required
 def handle_follow_request(request, request_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     fr = get_object_or_404(FollowRequest, id=request_id, to_author=me)
 
     action = request.POST.get("action")
@@ -93,7 +93,7 @@ def unfollow_local_author(request, author_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     target = get_object_or_404(Author, id=author_id)
 
     me.following.remove(target)
@@ -103,7 +103,7 @@ def unfollow_local_author(request, author_id):
 
 @login_required
 def my_entries(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entries = Entry.objects.filter(author=me).order_by("-created_at")
     return render(request, "socialdistribution/my_entries.html", {
         "my_author": me,
@@ -113,7 +113,7 @@ def my_entries(request):
 
 @login_required
 def create_entry(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if request.method == "POST":
         form = EntryForm(request.POST)
@@ -133,7 +133,7 @@ def create_entry(request):
 
 @login_required
 def author_entries(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -150,7 +150,7 @@ def author_entries(request, author_id):
 
 @login_required
 def feed(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     following_ids = set(me.following.values_list("id", flat=True))
     following_ids.add(me.id)
@@ -175,9 +175,9 @@ def feed(request):
 def public_author_profile(request, username):
     User = get_user_model()
     user = get_object_or_404(User, username=username)
-    author, _ = Author.objects.get_or_create(user=user)
+    author, _ = Author.objects.get_or_create(user=user, defaults={"display_name": user.username})
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
@@ -205,7 +205,7 @@ def public_author_profile(request, username):
 
 @login_required
 def author_followers(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -221,7 +221,7 @@ def author_followers(request, author_id):
 
 @login_required
 def author_following(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -237,7 +237,7 @@ def author_following(request, author_id):
 
 @login_required
 def author_friends(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -253,7 +253,7 @@ def author_friends(request, author_id):
 
 @login_required
 def edit_profile(request):
-    author, _ = Author.objects.get_or_create(user=request.user)
+    author, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if request.method == "POST":
         form = AuthorForm(request.POST, instance=author)
@@ -321,7 +321,7 @@ def can_access_entry(me: Author, entry: Entry) -> bool:
 @require_POST
 @login_required
 def add_comment(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
 
     if not can_access_entry(me, entry):
@@ -342,7 +342,7 @@ def add_comment(request, entry_id):
 @require_POST
 @login_required
 def toggle_entry_like(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
 
     if not can_access_entry(me, entry):
@@ -359,7 +359,7 @@ def toggle_entry_like(request, entry_id):
 @require_POST
 @login_required
 def toggle_comment_like(request, comment_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     comment = get_object_or_404(Comment, id=comment_id)
     entry = comment.entry
 
@@ -377,7 +377,7 @@ def toggle_comment_like(request, comment_id):
 @require_GET
 @login_required
 def view_entry(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
     
     # Check if user can access this entry

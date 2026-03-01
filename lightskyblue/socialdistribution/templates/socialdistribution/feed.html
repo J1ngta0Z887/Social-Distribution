@@ -31,6 +31,8 @@
                   <form method="post" action="{% url 'unfollow_local_author' entry.author.id %}" style="display:inline; margin:0;">
                     {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">unfollow</button>
                   </form>
+                {% elif my_author|has_pending_follow_request:entry.author %}
+                  <span style="color:#6c757d;">pending...</span>
                 {% else %}
                   <form method="post" action="{% url 'follow_local_author' entry.author.id %}" style="display:inline; margin:0;">
                     {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">follow</button>
