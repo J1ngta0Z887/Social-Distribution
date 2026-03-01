@@ -3,6 +3,7 @@
 # data from or to the database, so that they can be reused in the user-facing
 # views.
 from http.client import HTTPResponse
+import json
 from urllib.request import Request
 
 from django.core.paginator import Paginator
@@ -60,7 +61,7 @@ class AuthorAPI(View):
             return JsonResponse({})
         return JsonResponse(author.serialize(), safe=True)
 
-    def put(self, req: HTTPResponse):
+    def put(self, req: HTTPResponse, author_id: int):
         user = req.user
         if not user.is_authenticated:
             return JsonResponse({}, status=401)
@@ -69,5 +70,10 @@ class AuthorAPI(View):
         if not author:
             return JsonResponse({}, status=404)
 
-        self.update_profile(req, req.PUT)
+        try:
+            payload = json.loads(req.body.decode("utf-8")) if req.body else {}
+        except json.JSONDecodeError:
+            payload = {}
+
+        author.update_profile(payload)
         return JsonResponse(author.serialize(), safe=True)
