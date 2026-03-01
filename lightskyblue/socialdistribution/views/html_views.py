@@ -95,7 +95,6 @@ def unfollow_local_author(request, author_id):
     return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
 
-
 @login_required
 def my_entries(request):
     me, _ = Author.objects.get_or_create(user=request.user)
@@ -134,13 +133,33 @@ def author_entries(request, author_id):
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors' entries")
 
-    qs = Entry.objects.filter(author=author, visibility = "PUBLIC").order_by("-created_at")
+    all_entries = Entry.objects.filter(author=author).order_by("-created_at")
+    entries = [e for e in all_entries if can_access_entry(me, e)]
 
     return render(request, "socialdistribution/author_entries.html", {
         "my_author": me,
         "author": author,
-        "entries": qs,
+        "entries": entries,
     })
+
+def can_access_entry(me: Author, entry: Entry) -> bool:
+    if entry.visibility == "PUBLIC":
+        return True
+    if entry.author == me:
+        return True
+    if entry.author.host != me.host:
+        return False
+
+    following_ids = set(me.following.values_list("id", flat=True))
+    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
+
+    if entry.visibility == "UNLISTED":
+        return entry.author_id in following_ids  
+    elif entry.visibility == "FOLLOWERS":
+        return entry.author_id in following_ids
+    elif entry.visibility == "FRIENDS":
+        return entry.author_id in friend_ids
+    return False
 
 
 @login_required
@@ -152,14 +171,13 @@ def feed(request):
     friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
 
     #allows viewing of all public entries and unlisted/friends-only entries of authors you are following
-    entries = Entry.objects.filter(
-        author__host=me.host
-    ).filter(
+    entries = Entry.objects.filter(author__host=me.host).filter(
         Q(visibility="PUBLIC") |
         Q(visibility="UNLISTED", author__id__in=following_ids) |
-        Q(visibility="FRIENDS", author__id__in=friend_ids)
+        Q(visibility="FRIENDS", author__id__in=friend_ids) |
+        Q(visibility="FOLLOWERS", author__id__in=following_ids)
     ).order_by("-created_at")
-
+    
     return render(request, "socialdistribution/feed.html", {
         "my_author": me,
         "entries": entries,
@@ -182,8 +200,8 @@ def public_author_profile(request, username):
         entries = Entry.objects.filter(author=author).order_by("-created_at")
     else:
         # Non-followers (and everyone else) only see PUBLIC posts
-        entries = Entry.objects.filter(author=author, visibility="PUBLIC").order_by("-created_at")
-
+        all_entries = Entry.objects.filter(author=author).order_by("-created_at")
+        entries = [e for e in all_entries if can_access_entry(me, e)]
     followers_count = author.followers.count()
     following_count = author.following.count()
     friends_count = author.following.filter(following=author).count()
@@ -300,18 +318,6 @@ def delete_entry(request, entry_id):
 
     # Task 23: Author can see entry before deletion (It's passed in context)
     return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
-
-def can_access_entry(me: Author, entry: Entry) -> bool:
-    if (entry.author == me or entry.visibility == "PUBLIC"):
-        return True
-    if entry.author.host != me.host:
-        return False
-    allowed_ids = set(me.following.values_list("id", flat=True))
-    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
-    if entry.visibility == "FRIENDS":
-        return entry.author_id in friend_ids
-    else:
-        return entry.author_id in allowed_ids
 
 @require_POST
 @login_required
