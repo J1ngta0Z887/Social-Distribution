@@ -22,7 +22,7 @@ body {
   right: 22px;
 }
 
-/* Layout: left image, right column */
+/* Layout: profile image on the left with a column on the right*/
 .profile-layout {
   display: flex;
   align-items: flex-start;

@@ -26,6 +26,11 @@ def home(request):
 def authors_list(request):
     me, _ = Author.objects.get_or_create(user=request.user)
     authors = Author.objects.filter(host=me.host)
+
+    q = request.GET.get("q")  # ← added
+    if q:                     # ← added
+        authors = authors.filter(user__username__icontains=q)
+
     return render(request, "socialdistribution/authors.html", {
         "authors": authors,
         "my_author": me
