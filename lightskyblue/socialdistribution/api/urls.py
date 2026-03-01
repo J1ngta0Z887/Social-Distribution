@@ -1,13 +1,26 @@
 # ref: https://docs.djangoproject.com/en/6.0/topics/http/urls/
 
-from django.urls import path
+from django.urls import re_path, path, include
 from . import views
-from .views import AuthorsAPI, AuthorAPI, AuthorFollowingsAPI
+from .views import AuthorsAPI, AuthorAPI, AuthorFollowingsAPI, AuthorFollowersAPI
+
+# https://regex101.com/r/1tqPOL/1 (matches either author id or name)
+author_id_regex = r"(?P<author_id>[\w\s]+)"
 
 urlpatterns = [
-    #
-    path("authors", AuthorsAPI.as_view()),
-    path("authors/<int:author_id>", AuthorAPI.as_view()),
-    path("authors/<int:author_id>/following", AuthorFollowingsAPI.as_view()),
-    path("authors/<int:author_id>/followers", views.AuthorFollowersAPI.as_view()),
+    # very rough fix for supporting both regular and
+    # directory-based paths
+    path("authors", include(
+        [
+            path("", AuthorsAPI.as_view()),
+            re_path(author_id_regex, include(
+                [
+                    path("", AuthorAPI.as_view()),
+                    path("/following", AuthorFollowingsAPI.as_view()),
+                    path("/followers", AuthorFollowersAPI.as_view()),
+                ]
+            )),
+
+        ]
+    )),
 ]

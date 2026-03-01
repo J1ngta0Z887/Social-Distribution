@@ -1,19 +1,42 @@
-{% for a in authors %}
-  <div>
-    <span>{{ a.user.username }}</span>
+{% extends "base.html" %}
+{% load static %}
 
-    {% if a.id != my_author.id %}
-      {% if a in my_author.following.all %}
-        <form method="post" action="{% url 'unfollow_local_author' a.id %}">
-          {% csrf_token %}
-          <button type="submit">Unfollow</button>
-        </form>
-      {% else %}
-        <form method="post" action="{% url 'follow_local_author' a.id %}">
-          {% csrf_token %}
-          <button type="submit">Follow</button>
-        </form>
-      {% endif %}
-    {% endif %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'socialdistribution/css/localauthors.css' %}">
+{% endblock %}
+
+{% block content %}
+
+  <div class="search-container">
+    <form method="get">
+      <input 
+        type="text" 
+        name="q" 
+        placeholder="Search authors..." 
+        value="{{ request.GET.q }}"
+      >
+      <button type="submit">Search</button>
+    </form>
   </div>
-{% endfor %}
+
+
+  {% for a in authors %}
+    <div class="authors-container">
+      <span>{{ a.user.username }}</span>
+
+      {% if a.id != my_author.id %}
+        {% if a in my_author.following.all %}
+          <form method="post" action="{% url 'unfollow_local_author' a.id %}">
+            {% csrf_token %}
+            <button type="submit">Unfollow</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'follow_local_author' a.id %}">
+            {% csrf_token %}
+            <button type="submit">Follow</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endblock %}

@@ -51,12 +51,15 @@ class AuthorsAPI(View):
 
 # per https://uofa-cmput404.github.io/general/project.html#single-author-api
 class AuthorAPI(View):
-    def _pull(self, author_id) -> Author:
-        return Author.objects.get(id=author_id)
+
+    def _pull(self, author_id: int | str) -> Author | None:
+        if author_id.isdigit():
+            return Author.objects.get(id=int(author_id))
+        else:
+            return Author.objects.get(display_name=author_id)
 
     def _push(self, author: Author, new_values: dict):
         author.update_profile(new_values)
-
 
     def get(self, req, author_id):
         try:
@@ -65,14 +68,17 @@ class AuthorAPI(View):
             return JsonResponse({})
         return JsonResponse(author.serialize(), safe=True)
 
-    def put(self, req: HTTPResponse, author_id: int):
+    def put(self, req: HTTPResponse, author_id: any):
         user = req.user
         if not user.is_authenticated:
             return JsonResponse({}, status=401)
 
-        author = Author.objects.get(user=user)
+        author = self._pull(author_id)
         if not author:
             return JsonResponse({}, status=404)
+
+        if user.id != author.id:
+            return JsonResponse({}, status=403)
 
         try:
             payload = json.loads(req.body.decode("utf-8")) if req.body else {}
@@ -85,10 +91,13 @@ class AuthorAPI(View):
 # per https://uofa-cmput404.github.io/general/project.html#following-api
 class AuthorFollowingsAPI(View):
 
-    def _pull(self, author_id: int) -> Author:
-        return Author.objects.get(id=author_id)
+    def _pull(self, author_id: int | str) -> Author | None:
+        if author_id.isdigit():
+            return Author.objects.get(id=int(author_id))
+        else:
+            return Author.objects.get(display_name=author_id)
 
-    def get(self, req: HTTPResponse, author_id: int):
+    def get(self, req: HTTPResponse, author_id: any):
         author = self._pull(author_id)
         if not author:
             return JsonResponse({})
@@ -102,8 +111,11 @@ class AuthorFollowingsAPI(View):
 # per https://uofa-cmput404.github.io/general/project.html#followers-api
 class AuthorFollowersAPI(View):
 
-    def _pull(self, author_id: int) -> Author:
-        return Author.objects.get(id=author_id)
+    def _pull(self, author_id: int | str) -> Author | None:
+        if author_id.isdigit():
+            return Author.objects.get(id=int(author_id))
+        else:
+            return Author.objects.get(display_name=author_id)
 
     def get(self, req: HTTPResponse, author_id: int):
         author = self._pull(author_id)
