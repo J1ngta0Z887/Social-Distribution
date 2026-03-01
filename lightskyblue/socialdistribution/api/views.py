@@ -115,6 +115,10 @@ class AuthorFollowingsAPI(View):
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
 
+
+class AuthorFollowingPerUserAPI:
+    pass
+
 # per https://uofa-cmput404.github.io/general/project.html#followers-api
 class AuthorFollowersAPI(View):
 
