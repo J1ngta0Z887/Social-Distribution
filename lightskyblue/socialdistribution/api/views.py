@@ -93,10 +93,26 @@ class AuthorFollowingsAPI(View):
         if not author:
             return JsonResponse({})
         resp = {}
-        resp["type"] = "authors"
+        resp["type"] = "following"
         resp["authors"] = []
         for author in author.following.all():
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
 
+# per https://uofa-cmput404.github.io/general/project.html#followers-api
+class AuthorFollowersAPI(View):
 
+    def _pull(self, author_id: int) -> Author:
+        return Author.objects.get(id=author_id)
+
+    def get(self, req: HTTPResponse, author_id: int):
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({})
+        resp = {}
+        resp["type"] = "followers"
+        resp["authors"] = []
+        for author in author.followers.all():
+            resp["authors"].append(author.serialize())
+        return JsonResponse(resp)
+    pass

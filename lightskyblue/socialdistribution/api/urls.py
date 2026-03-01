@@ -8,5 +8,6 @@ urlpatterns = [
     #
     path("authors", AuthorsAPI.as_view()),
     path("authors/<int:author_id>", AuthorAPI.as_view()),
-    path("authors/<int:author_id>/following", AuthorFollowingsAPI.as_view())
+    path("authors/<int:author_id>/following", AuthorFollowingsAPI.as_view()),
+    path("authors/<int:author_id>/followers", views.AuthorFollowersAPI.as_view()),
 ]
