@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
-from .views import html_views, api_views
+from .views import html_views
 
 urlpatterns = [
     #HTML pages

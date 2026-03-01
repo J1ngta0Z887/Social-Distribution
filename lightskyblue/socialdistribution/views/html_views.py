@@ -3,9 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from socialdistribution.utils import new_events
-from socialdistribution.models import Author, AuthorProfile, Entry, Comment, FollowRequest
-from socialdistribution.forms import AuthorProfileForm, EntryForm, CommentForm
+from ..utils import new_events
+from ..models import Author, Entry, Comment, FollowRequest
+from ..forms import AuthorForm, EntryForm, CommentForm
 from django.views.decorators.http import require_POST, require_GET
 
 
@@ -15,10 +15,9 @@ from django.views.decorators.http import require_POST, require_GET
 def home(request):
     # update the announcement to show the latest github events for the user
     me, _ = Author.objects.get_or_create(user=request.user)
-    profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
-    if profile.github_url:
+    if me.github_url:
         # extract the username from the github url
-        username = profile.github_url.rstrip("/").split("/")[-1]
+        username = me.github_url.rstrip("/").split("/")[-1]
         new_events(me, username)
     return render(request, "socialdistribution/home.html")
 
@@ -171,8 +170,7 @@ def feed(request):
 def public_author_profile(request, username):
     User = get_user_model()
     user = get_object_or_404(User, username=username)
-    profile, _ = AuthorProfile.objects.get_or_create(user=user)
-    author = get_object_or_404(Author, user=user)
+    author, _ = Author.objects.get_or_create(user=user)
 
     me, _ = Author.objects.get_or_create(user=request.user)
 
@@ -192,7 +190,6 @@ def public_author_profile(request, username):
 
     return render(request, "socialdistribution/profile.html", {
         "profile_user": user,
-        "profile": profile,
         "author": author,
         "entries": entries,
         "my_author": me,
@@ -251,19 +248,19 @@ def author_friends(request, author_id):
 
 @login_required
 def edit_profile(request):
-    profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+    author, _ = Author.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = AuthorProfileForm(request.POST, instance=profile)
+        form = AuthorForm(request.POST, instance=author)
         if form.is_valid():
             form.save()
             return redirect("public_author_profile", username=request.user.username)
     else:
-        form = AuthorProfileForm(instance=profile)
+        form = AuthorForm(instance=author)
 
     return render(request, "socialdistribution/edit_profile.html", {
         "form": form,
-        "profile": profile,
+        "author": author,
     })
 
 @login_required

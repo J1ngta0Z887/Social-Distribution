@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-.creds
+.idea/
+*.iml
 
 # Virtual Environment
 venv/
@@ -16,7 +17,6 @@ env/
 *.pyc
 db.sqlite3
 media/
-migrations/
 
 # Environment variables
 .env
@@ -24,15 +24,8 @@ migrations/
 # VSCode
 .vscode/
 
-.idea/
-
 # Mac
 .DS_Store
 
 # Windows
 Thumbs.db
-
-# IDE
-
-.idea
-
