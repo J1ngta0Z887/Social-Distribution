@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 @login_required
 def home(request):
     # update the announcement to show the latest github events for the user
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     if me.github_url:
         # extract the username from the github url
         username = me.github_url.rstrip("/").split("/")[-1]
@@ -24,8 +24,13 @@ def home(request):
 
 @login_required
 def authors_list(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     authors = Author.objects.filter(host=me.host)
+
+    q = request.GET.get("q")  # ← added
+    if q:                     # ← added
+        authors = authors.filter(user__username__icontains=q)
+
     return render(request, "socialdistribution/authors.html", {
         "authors": authors,
         "my_author": me
@@ -37,7 +42,7 @@ def follow_local_author(request, author_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     target = get_object_or_404(Author, id=author_id)
 
     if me.host != target.host:
@@ -56,7 +61,7 @@ def follow_local_author(request, author_id):
 
 @login_required
 def follow_requests(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     pending = FollowRequest.objects.filter(to_author=me, status="PENDING").select_related("from_author__user")
     pending.filter(seen_by_target=False).update(seen_by_target=True)
     return render(request, "socialdistribution/follow_requests.html", {
@@ -67,7 +72,7 @@ def follow_requests(request):
 @require_POST
 @login_required
 def handle_follow_request(request, request_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     fr = get_object_or_404(FollowRequest, id=request_id, to_author=me)
 
     action = request.POST.get("action")
@@ -88,17 +93,16 @@ def unfollow_local_author(request, author_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     target = get_object_or_404(Author, id=author_id)
 
     me.following.remove(target)
     return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
 
-
 @login_required
 def my_entries(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entries = Entry.objects.filter(author=me).order_by("-created_at")
     return render(request, "socialdistribution/my_entries.html", {
         "my_author": me,
@@ -108,7 +112,7 @@ def my_entries(request):
 
 @login_required
 def create_entry(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if request.method == "POST":
         form = EntryForm(request.POST)
@@ -116,7 +120,7 @@ def create_entry(request):
             entry = form.save(commit=False)
             entry.author = me
             entry.save()
-            return redirect("feed")
+            return redirect("home")
     else:
         form = EntryForm()
 
@@ -128,38 +132,54 @@ def create_entry(request):
 
 @login_required
 def author_entries(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors' entries")
 
-    qs = Entry.objects.filter(author=author, visibility = "PUBLIC").order_by("-created_at")
+    all_entries = Entry.objects.filter(author=author).order_by("-created_at")
+    entries = [e for e in all_entries if can_access_entry(me, e)]
 
     return render(request, "socialdistribution/author_entries.html", {
         "my_author": me,
         "author": author,
-        "entries": qs,
+        "entries": entries,
     })
+
+def can_access_entry(me: Author, entry: Entry) -> bool:
+    if entry.visibility == "PUBLIC":
+        return True
+    if entry.author == me:
+        return True
+    if entry.author.host != me.host:
+        return False
+
+    following_ids = set(me.following.values_list("id", flat=True))
+    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
+
+    if entry.visibility == "UNLISTED":
+        return entry.author_id in following_ids  
+    elif entry.visibility == "FRIENDS":
+        return entry.author_id in friend_ids
+    return False
 
 
 @login_required
 def feed(request):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     following_ids = set(me.following.values_list("id", flat=True))
     following_ids.add(me.id)
     friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
 
     #allows viewing of all public entries and unlisted/friends-only entries of authors you are following
-    entries = Entry.objects.filter(
-        author__host=me.host
-    ).filter(
+    entries = Entry.objects.filter(author__host=me.host).filter(
         Q(visibility="PUBLIC") |
         Q(visibility="UNLISTED", author__id__in=following_ids) |
         Q(visibility="FRIENDS", author__id__in=friend_ids)
     ).order_by("-created_at")
-
+    
     return render(request, "socialdistribution/feed.html", {
         "my_author": me,
         "entries": entries,
@@ -170,9 +190,9 @@ def feed(request):
 def public_author_profile(request, username):
     User = get_user_model()
     user = get_object_or_404(User, username=username)
-    author, _ = Author.objects.get_or_create(user=user)
+    author, _ = Author.objects.get_or_create(user=user, defaults={"display_name": user.username})
 
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
@@ -182,8 +202,8 @@ def public_author_profile(request, username):
         entries = Entry.objects.filter(author=author).order_by("-created_at")
     else:
         # Non-followers (and everyone else) only see PUBLIC posts
-        entries = Entry.objects.filter(author=author, visibility="PUBLIC").order_by("-created_at")
-
+        all_entries = Entry.objects.filter(author=author).order_by("-created_at")
+        entries = [e for e in all_entries if can_access_entry(me, e)]
     followers_count = author.followers.count()
     following_count = author.following.count()
     friends_count = author.following.filter(following=author).count()
@@ -200,7 +220,7 @@ def public_author_profile(request, username):
 
 @login_required
 def author_followers(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -216,7 +236,7 @@ def author_followers(request, author_id):
 
 @login_required
 def author_following(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
@@ -232,13 +252,13 @@ def author_following(request, author_id):
 
 @login_required
 def author_friends(request, author_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     author = get_object_or_404(Author, id=author_id)
 
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
 
-    friends = author.followers.filter(following=author).select_related("user").order_by("user__username")
+    friends = author.following.filter(followers=author).select_related("user").order_by("user__username")
     return render(request, "socialdistribution/author_connections.html", {
         "connection_type": "Friends",
         "author": author,
@@ -248,7 +268,7 @@ def author_friends(request, author_id):
 
 @login_required
 def edit_profile(request):
-    author, _ = Author.objects.get_or_create(user=request.user)
+    author, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
 
     if request.method == "POST":
         form = AuthorForm(request.POST, instance=author)
@@ -296,27 +316,15 @@ def delete_entry(request, entry_id):
 
     if request.method == "POST":
         entry.delete()
-        return redirect("my_entries")
+        return redirect(request.POST.get("next") or "home")
 
     # Task 23: Author can see entry before deletion (It's passed in context)
     return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
 
-def can_access_entry(me: Author, entry: Entry) -> bool:
-    if (entry.author == me or entry.visibility == "PUBLIC"):
-        return True
-    if entry.author.host != me.host:
-        return False
-    allowed_ids = set(me.following.values_list("id", flat=True))
-    friend_ids = set(me.following.filter(following=me).values_list("id", flat=True))
-    if entry.visibility == "FRIENDS":
-        return entry.author_id in friend_ids
-    else:
-        return entry.author_id in allowed_ids
-
 @require_POST
 @login_required
 def add_comment(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
 
     if not can_access_entry(me, entry):
@@ -337,7 +345,7 @@ def add_comment(request, entry_id):
 @require_POST
 @login_required
 def toggle_entry_like(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
 
     if not can_access_entry(me, entry):
@@ -354,7 +362,7 @@ def toggle_entry_like(request, entry_id):
 @require_POST
 @login_required
 def toggle_comment_like(request, comment_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     comment = get_object_or_404(Comment, id=comment_id)
     entry = comment.entry
 
@@ -372,7 +380,7 @@ def toggle_comment_like(request, comment_id):
 @require_GET
 @login_required
 def view_entry(request, entry_id):
-    me, _ = Author.objects.get_or_create(user=request.user)
+    me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     entry = get_object_or_404(Entry, id=entry_id)
     
     # Check if user can access this entry

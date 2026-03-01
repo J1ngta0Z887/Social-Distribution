@@ -22,7 +22,7 @@ body {
   right: 22px;
 }
 
-/* Layout: left image, right column */
+/* Layout: profile image on the left with a column on the right*/
 .profile-layout {
   display: flex;
   align-items: flex-start;
@@ -90,6 +90,38 @@ body {
 
 .links {
   margin-top: 6px;
+}
+
+/* Button styles (for entry edit/delete buttons) */
+.btn-primary {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  color: #fff;
+  transition: 0.2s ease;
+}
+
+/* Gray (Edit) */
+a.btn-primary[style*="#6c757d"] {
+  background-color: #6c757d;
+}
+
+a.btn-primary[style*="#6c757d"]:hover {
+  background-color: #5c636a;
+}
+
+/* Red (Delete) */
+button.btn-primary[style*="#dc3545"] {
+  background-color: #dc3545;
+}
+
+button.btn-primary[style*="#dc3545"]:hover {
+  background-color: #bb2d3b;
 }
 
 /* Mobile */

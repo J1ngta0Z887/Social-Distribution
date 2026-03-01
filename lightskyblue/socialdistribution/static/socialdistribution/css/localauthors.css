@@ -1,0 +1,89 @@
+/* Make search bar width match author cards */
+.search-container {
+  max-width: 600px;     /* same as your cards */
+  width: 100%;          /* important */
+  margin: 20px auto;
+  box-sizing: border-box;
+}
+
+.search-container form {
+  width: 100%;          /* THIS is the key */
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 18px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.search-container input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  outline: none;
+}
+
+.search-container button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  background-color: #6d99ff;
+  color: white;
+  transition: 0.2s ease;
+}
+
+.search-container button:hover {
+  background-color: #0056b3;
+}
+
+
+
+/* Page background */
+body {
+    background-color: #f5f7fa;
+}
+
+/* Each author card */
+.authors-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 600px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 20px auto;
+    padding: 12px 18px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Username text */
+.authors-container span {
+    text-transform: capitalize;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+/* Buttons */
+.authors-container button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    background-color: #9ebbff;
+    color: white;
+    transition: 0.2s ease;
+}
+
+.authors-container button:hover {
+    background-color: #0056b3;
+}
