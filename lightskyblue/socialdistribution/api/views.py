@@ -132,7 +132,7 @@ class AuthorFollowersAPI(View):
     def get(self, req: HTTPResponse, author_id: int):
         author = self._pull(author_id)
         if not author:
-            return JsonResponse({})
+            return JsonResponse({}, status=403)
 
         resp = {}
         resp["type"] = "followers"
@@ -145,6 +145,20 @@ class AuthorFollowersAPI(View):
 
 # per https://uofa-cmput404.github.io/general/project.html#follow-request-api
 class AuthorFollowRequestAPI(View):
+    def _pull(self, author_id: int | str) -> Author | None:
+        return get_author_model_from_id(author_id)
+
 
     def get(self, req: HTTPResponse, author_id: any):
-        pass
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=403)
+        if not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
+        resp = {}
+        resp["type"] = "requests"
+        resp["requests"] = []
+        for follow_request in author.follow_requests.all():
+            resp["requests"].append(follow_request.serialize())
+        return JsonResponse(resp)

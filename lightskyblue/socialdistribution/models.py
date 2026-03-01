@@ -148,3 +148,11 @@ class FollowRequest(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['from_author', 'to_author'], name='unique_follow_request')
         ]
+
+    def serialize(self):
+        follow_req = {}
+        follow_req["type"] = "follow"
+        follow_req["summary"] = f"{self.from_author.display_name} wants to follow {self.to_author.display_name}"
+        follow_req["actor"] = self.from_author.serialize()
+        follow_req["object"] = self.to_author.serialize()
+        return follow_req
