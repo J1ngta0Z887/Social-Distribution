@@ -1,14 +1,28 @@
+{% comment %}
+Template: connection list page (followers / following / friends, etc.)
+
+Purpose:
+- Renders a simple list of users connected to `author` for the given `connection_type`.
+
+Context expected:
+- connection_type: Human-readable label (e.g., "Followers", "Following")
+- author: The profile owner whose connections are being displayed
+- connections: Iterable of connection objects where each has `user.username`
+{% endcomment %}
+
 {% extends "base.html" %}
 
+{# Page title shown in the browser tab #}
 {% block title %}{{ connection_type }} | lightskyblue{% endblock %}
 
 {% block content %}
   <div class="card profile-card">
-
+    {# Page heading: which relationship type and whose list it is #}
     <h1>{{ connection_type }} of {{ author.user.username }}</h1>
     <ul>
-    {% for connection in connections %}
-      <li>{{ connection.user.username }}</li>
+      {# Each `connection` is expected to expose `connection.user.username` #}
+      {% for connection in connections %}
+        <li>{{ connection.user.username }}</li>
     {% endfor %}
     </ul>
   </div>

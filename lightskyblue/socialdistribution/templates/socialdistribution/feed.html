@@ -1,15 +1,48 @@
+{% comment %}
+Template: Feed (entry stream)
+
+Purpose:
+- Displays a feed of `entries` with author info, timestamps, optional title/content/image.
+- Provides actions: create entry, follow/unfollow authors, like/unlike entries, edit/delete own entries,
+  view entry details, and add/like comments.
+- Uses custom template filters from `social_extras` for follow-state checks and rendering entry content.
+
+Template tags / libraries:
+- {% load static %}: for loading feed.css via Django staticfiles
+- {% load social_extras %}: provides `render_entry`, `is_following`, `has_pending_follow_request`
+
+Context expected:
+- entries: Iterable of Entry objects (each has author, created_at, updated_at, title, content, image_url, likes, comments)
+- my_author: The current user's Author object (used for follow checks and like membership checks)
+- request: Used for request.user, request.path, and navigation redirects ("next")
+
+Routes expected:
+- create_entry
+- public_author_profile (takes author username)
+- view_entry (takes entry id)
+- edit_entry (takes entry id)
+- delete_entry (takes entry id)
+- follow_local_author / unfollow_local_author (take author id)
+- toggle_entry_like (takes entry id)
+- add_comment (takes entry id)
+- toggle_comment_like (takes comment id)
+{% endcomment %}
+
 {% extends "base.html" %}
 {% load static %}
 {% load social_extras %}
 
+{# Page title shown in the browser tab #}
 {% block title %}Feed{% endblock %}
 
+{# Page-specific stylesheet for feed layout/typography #}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'socialdistribution/css/feed.css' %}">
+  <link rel="stylesheet" href="{% static 'socialdistribution/css/feed.css' %}">
 {% endblock %}
 
 {% block content %}
   <div class="card">
+    {# Header row: page title + primary CTA to create a new entry #}
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h1 class="title" style="margin:0;">Feed</h1>
       <a class="btn-primary" href="{% url 'create_entry' %}">
@@ -17,68 +50,114 @@
       </a>
     </div>
 
+    {# Feed body: render entries if present, otherwise show empty-state #}
     {% if entries %}
       {% for entry in entries %}
+        {# Single entry card #}
         <div class="card" style="margin:12px 0;">
+
+          {# Meta block: author + follow status/actions + timestamps #}
           <div style="margin:0 0 6px 0;">
             <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px;">
+              {# Author name links to public profile #}
               <strong>
-                <a href="{% url 'public_author_profile' entry.author.user.username %}">{{ entry.author.user.username }}</a>
+                <a href="{% url 'public_author_profile' entry.author.user.username %}">
+                  {{ entry.author.user.username }}
+                </a>
               </strong>
+
+              {# Follow controls are only shown when viewing someone else's entry #}
               {% if entry.author.user != request.user %}
                 <span style="color:#4b5563;">·</span>
+
+                {# Follow state is computed via custom template filters #}
                 {% if my_author|is_following:entry.author %}
-                  <form method="post" action="{% url 'unfollow_local_author' entry.author.id %}" style="display:inline; margin:0;">
-                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">unfollow</button>
+                  <form method="post"
+                        action="{% url 'unfollow_local_author' entry.author.id %}"
+                        style="display:inline; margin:0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">
+                      unfollow
+                    </button>
                   </form>
+
                 {% elif my_author|has_pending_follow_request:entry.author %}
                   <span style="color:#6c757d;">pending...</span>
+
                 {% else %}
-                  <form method="post" action="{% url 'follow_local_author' entry.author.id %}" style="display:inline; margin:0;">
-                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">follow</button>
+                  <form method="post"
+                        action="{% url 'follow_local_author' entry.author.id %}"
+                        style="display:inline; margin:0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">
+                      follow
+                    </button>
                   </form>
                 {% endif %}
               {% endif %}
             </div>
+
+            {# Creation time, with optional edited timestamp #}
             <div style="color:#4b5563; font-size:0.85em; margin-top:1em;">
               {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}
             </div>
           </div>
 
+          {# Optional title (links to full entry view) #}
           {% if entry.title %}
             <h3 style="margin:0 0 6px 0;">
-              <a href="{% url 'view_entry' entry.id %}" style="text-decoration: underline; color: #0d6efd; cursor: pointer;">
+              <a href="{% url 'view_entry' entry.id %}"
+                 style="text-decoration: underline; color: #0d6efd; cursor: pointer;">
                 {{ entry.title }}
               </a>
             </h3>
           {% endif %}
 
+          {# Optional content; rendered via custom filter (e.g., markdown-to-HTML) #}
           {% if entry.content %}
             <div style="margin:0 0 10px 0;">{{ entry|render_entry }}</div>
           {% endif %}
 
+          {# Optional image attachment #}
           {% if entry.image_url %}
-            <img src="{{ entry.image_url }}" alt="entry image"
+            <img src="{{ entry.image_url }}"
+                 alt="entry image"
                  style="max-width:100%; border-radius:10px;">
           {% endif %}
 
+          {# Entry actions: like/unlike for everyone; edit/delete only for owner #}
           <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <form method="post" action="{% url 'toggle_entry_like' entry.id %}" style="display:inline;">
+            <form method="post"
+                  action="{% url 'toggle_entry_like' entry.id %}"
+                  style="display:inline;">
               {% csrf_token %}
+              {# "next" preserves current page so the view can redirect back after POST #}
               <input type="hidden" name="next" value="{{ request.path }}">
-              <button type="submit" class="btn-primary" style="background-color:#0d6efd; border:none; cursor:pointer;">
+              <button type="submit"
+                      class="btn-primary"
+                      style="background-color:#0d6efd; border:none; cursor:pointer;">
                 {% if my_author in entry.likes.all %}Unlike{% else %}Like{% endif %}
                 ({{ entry.likes.count }})
               </button>
             </form>
 
             {% if entry.author.user == request.user %}
-              <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+              <a href="{% url 'edit_entry' entry.id %}"
+                 class="btn-primary"
+                 style="background-color: #6c757d; text-decoration: none;">
+                Edit
+              </a>
 
-              <form method="post" action="{% url 'delete_entry' entry.id %}" style="display:inline;">
+              <form method="post"
+                    action="{% url 'delete_entry' entry.id %}"
+                    style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.path }}">
-                <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">
+                <button type="submit"
+                        class="btn-primary"
+                        style="background-color: #dc3545; border: none; cursor: pointer;">
                   Delete
                 </button>
               </form>
@@ -87,6 +166,7 @@
 
           <hr style="margin:12px 0;">
 
+          {# Comments section: list existing comments (with like controls) #}
           <div style="margin-top:10px;">
             <h4 style="margin:0 0 8px 0;">Comments</h4>
 
@@ -99,10 +179,13 @@
                     <div style="margin-top:4px;">{{ c.content }}</div>
                   </div>
 
-                  <form method="post" action="{% url 'toggle_comment_like' c.id %}" style="display:inline;">
+                  <form method="post"
+                        action="{% url 'toggle_comment_like' c.id %}"
+                        style="display:inline;">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="btn-primary"
+                    <button type="submit"
+                            class="btn-primary"
                             style="background-color:#198754; border:none; cursor:pointer; padding:6px 10px;">
                       {% if my_author in c.likes.all %}Unlike{% else %}Like{% endif %}
                       ({{ c.likes.count }})
@@ -115,6 +198,7 @@
             {% endfor %}
           </div>
 
+          {# Add-comment form (POST) for this entry #}
           <div style="margin-top:10px;">
             <form method="post" action="{% url 'add_comment' entry.id %}">
               {% csrf_token %}
