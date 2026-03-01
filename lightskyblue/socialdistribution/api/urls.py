@@ -16,8 +16,10 @@ urlpatterns = [
             re_path(author_id_regex, include(
                 [
                     path("", AuthorAPI.as_view()),
-                    path("/following", AuthorFollowingsAPI.as_view()),
-                    path("/followers", AuthorFollowersAPI.as_view()),
+                    path("/", include([
+                        path("following", AuthorFollowingsAPI.as_view()),
+                        path("followers", AuthorFollowersAPI.as_view()),
+                    ]))
                 ]
             )),
 

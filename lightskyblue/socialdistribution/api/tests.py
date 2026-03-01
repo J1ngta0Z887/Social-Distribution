@@ -26,6 +26,7 @@ class AuthorAPITest(TestCase):
             github_url="https://github.com/example",
             picture_url="http://example.com/pic.jpg",
         )
+        self.client.force_login(self.user)
 
     def tearDown(self):
         self.author.delete()
@@ -49,6 +50,7 @@ class AuthorAPITest(TestCase):
         self.assertEqual(response.json(), {})
 
     def test_put_author_logged_out_returns_401(self):
+        self.client.logout()
         response = self.client.put(
             f"/api/authors/{self.author.id}",
             data = self.new_payload,
@@ -56,6 +58,7 @@ class AuthorAPITest(TestCase):
         )
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json(), {})
+        self.client.force_login(self.user)
 
     def test_put_author_logged_in_updates_profile(self):
         self.client.force_login(self.user)

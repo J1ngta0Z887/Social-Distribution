@@ -15,6 +15,15 @@ from django.views import View
 from ..models import Author
 
 
+def get_author_model_from_id(author_id: int | str) -> Author | None:
+    if author_id.isdigit():
+        return Author.objects.get(id=int(author_id))
+    else:
+        return Author.objects.get(display_name=author_id)
+
+def user_is_author(user, author: Author) -> bool:
+    return user.id == author.id
+
 # per https://uofa-cmput404.github.io/general/project.html#authors-api
 class AuthorsAPI(View):
 
@@ -53,10 +62,7 @@ class AuthorsAPI(View):
 class AuthorAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def _push(self, author: Author, new_values: dict):
         author.update_profile(new_values)
@@ -92,15 +98,16 @@ class AuthorAPI(View):
 class AuthorFollowingsAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def get(self, req: HTTPResponse, author_id: any):
         author = self._pull(author_id)
+
         if not author:
             return JsonResponse({})
+        elif not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
         resp = {}
         resp["type"] = "following"
         resp["authors"] = []
@@ -112,15 +119,13 @@ class AuthorFollowingsAPI(View):
 class AuthorFollowersAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def get(self, req: HTTPResponse, author_id: int):
         author = self._pull(author_id)
         if not author:
             return JsonResponse({})
+
         resp = {}
         resp["type"] = "followers"
         resp["authors"] = []
