@@ -55,15 +55,15 @@ def follow_local_author(request, author_id):
     # If previously rejected, allow re-request and mark it unread again.
     if fr.status == "REJECTED":
         fr.status = "PENDING"
-        fr.seen_by_target = False
-        fr.save(update_fields=["status", "seen_by_target"])
+        fr.seen = False
+        fr.save(update_fields=["status", "seen"])
     return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
 @login_required
 def follow_requests(request):
     me, _ = Author.objects.get_or_create(user=request.user, defaults={"display_name": request.user.username})
     pending = FollowRequest.objects.filter(to_author=me, status="PENDING").select_related("from_author__user")
-    pending.filter(seen_by_target=False).update(seen_by_target=True)
+    pending.filter(seen=False).update(seen=True)
     return render(request, "socialdistribution/follow_requests.html", {
         "follow_requests": pending,
         "my_author": me,

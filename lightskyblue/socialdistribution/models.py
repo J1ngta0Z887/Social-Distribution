@@ -132,7 +132,6 @@ class FollowRequest(models.Model):
     STATUS_CHOICES = [
         ("PENDING", "Pending"),
         ("ACCEPTED", "Accepted"),
-        ("REJECTED", "Rejected"),
     ]
 
     from_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="sent_follow_requests")
@@ -142,7 +141,7 @@ class FollowRequest(models.Model):
         choices=STATUS_CHOICES,
         default="PENDING",
     )
-    seen_by_target = models.BooleanField(default=False)
+    seen = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

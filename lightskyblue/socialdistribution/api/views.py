@@ -115,10 +115,13 @@ class AuthorFollowingsAPI(View):
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
 
-
+# per https://uofa-cmput404.github.io/general/project.html#following-api (foreign authors
+# TODO: implement
 class AuthorFollowingPerUserAPI(View):
-    
+
     pass
+
+
 
 # per https://uofa-cmput404.github.io/general/project.html#followers-api
 class AuthorFollowersAPI(View):
@@ -138,3 +141,10 @@ class AuthorFollowersAPI(View):
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
     pass
+
+
+# per https://uofa-cmput404.github.io/general/project.html#follow-request-api
+class AuthorFollowRequestAPI(View):
+
+    def get(self, req: HTTPResponse, author_id: any):
+        pass
