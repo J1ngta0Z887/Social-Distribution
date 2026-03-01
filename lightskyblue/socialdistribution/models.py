@@ -6,12 +6,15 @@ class Author(models.Model):
 
     host = models.URLField(default="http://127.0.0.1:8000")
 
+    # keeps track of which authors this author is following (for feed generation and friend checks)
     following = models.ManyToManyField(
         "self",
         symmetrical=False,
         related_name="followers",
         blank=True
     )
+
+    # to get the followers of this author, we can use the reverse relationship "followers" from the following field
 
     def is_following(self, other_author) -> bool:
         return self.following.filter(id=other_author.id).exists()

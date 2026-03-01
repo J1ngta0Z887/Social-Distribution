@@ -186,14 +186,68 @@ def public_author_profile(request, username):
         # Non-followers (and everyone else) only see PUBLIC posts
         entries = Entry.objects.filter(author=author, visibility="PUBLIC").order_by("-created_at")
 
+    followers_count = author.followers.count()
+    following_count = author.following.count()
+    friends_count = author.following.filter(following=author).count()
+
     return render(request, "socialdistribution/profile.html", {
         "profile_user": user,
         "profile": profile,
         "author": author,
         "entries": entries,
         "my_author": me,
+        "followers_count": followers_count,
+        "following_count": following_count,
+        "friends_count": friends_count,
     })
 
+@login_required
+def author_followers(request, author_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    author = get_object_or_404(Author, id=author_id)
+
+    if me.host != author.host:
+        return HttpResponseForbidden("Can only view local authors")
+
+    followers = author.followers.select_related("user").order_by("user__username")
+    return render(request, "socialdistribution/author_connections.html", {
+        "connection_type": "Followers",
+        "author": author,
+        "connections": followers,
+        "my_author": me,
+    })
+
+@login_required
+def author_following(request, author_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    author = get_object_or_404(Author, id=author_id)
+
+    if me.host != author.host:
+        return HttpResponseForbidden("Can only view local authors")
+
+    following = author.following.select_related("user").order_by("user__username")
+    return render(request, "socialdistribution/author_connections.html", {
+        "connection_type": "Following",
+        "author": author,
+        "connections": following,
+        "my_author": me,
+    })
+
+@login_required
+def author_friends(request, author_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    author = get_object_or_404(Author, id=author_id)
+
+    if me.host != author.host:
+        return HttpResponseForbidden("Can only view local authors")
+
+    friends = author.followers.filter(following=author).select_related("user").order_by("user__username")
+    return render(request, "socialdistribution/author_connections.html", {
+        "connection_type": "Friends",
+        "author": author,
+        "connections": friends,
+        "my_author": me,
+    })
 
 @login_required
 def edit_profile(request):

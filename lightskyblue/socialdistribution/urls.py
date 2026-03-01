@@ -23,7 +23,9 @@ urlpatterns = [
     path("entries/<int:entry_id>/like/", html_views.toggle_entry_like, name="toggle_entry_like"),
     path("comments/<int:comment_id>/like/", html_views.toggle_comment_like, name="toggle_comment_like"),
     path("entries/<int:entry_id>/comment/", html_views.add_comment, name="add_comment"),
-
+    path("authors/<int:author_id>/followers/", html_views.author_followers, name="author_followers"),
+    path("authors/<int:author_id>/following/", html_views.author_following, name="author_following"),
+    path("authors/<int:author_id>/friends/", html_views.author_friends, name="author_friends"),
     #API endpoints
     #path("api/authors/<int:author_id>/entries/<int:entry_id>/", api_views.get_entry, name="api_get_entry"),
     path("follow-requests/", html_views.follow_requests, name="follow_requests"),

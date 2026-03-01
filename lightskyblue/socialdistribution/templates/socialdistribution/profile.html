@@ -41,6 +41,15 @@
       </div>
     </div>
 
+    <div class = "Followers" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <a href="{% url 'author_followers' profile_user.id %}">Followers: {{ followers_count }}</a>
+    </div>
+    <div class = "Following" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <a href="{% url 'author_following' profile_user.id %}">Following: {{ following_count }}</a>
+    </div>
+    <div class = "Friendss" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <a href="{% url 'author_friends' profile_user.id %}">Friends: {{ friends_count }}</a>
+    </div>
     <div class="profile-entries" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
       <h2>Entries</h2>
       {% if entries %}
