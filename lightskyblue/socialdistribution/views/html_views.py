@@ -3,8 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from socialdistribution.models import Author, Entry, Comment
-from socialdistribution.forms import AuthorForm, EntryForm, CommentForm
+from ..utils import new_events
+from ..models import Author, Entry, Comment, FollowRequest
+from ..forms import AuthorForm, EntryForm, CommentForm
 from django.views.decorators.http import require_POST, require_GET
 
 
@@ -12,6 +13,12 @@ from django.views.decorators.http import require_POST, require_GET
 
 @login_required
 def home(request):
+    # update the announcement to show the latest github events for the user
+    me, _ = Author.objects.get_or_create(user=request.user)
+    if me.github_url:
+        # extract the username from the github url
+        username = me.github_url.rstrip("/").split("/")[-1]
+        new_events(me, username)
     return render(request, "socialdistribution/home.html")
 
 
@@ -39,9 +46,42 @@ def follow_local_author(request, author_id):
     if me.id == target.id:
         return HttpResponseBadRequest("Cannot follow yourself")
 
-    me.following.add(target)
+    fr, _ = FollowRequest.objects.get_or_create(from_author=me, to_author=target)
+    # If previously rejected, allow re-request and mark it unread again.
+    if fr.status == "REJECTED":
+        fr.status = "PENDING"
+        fr.seen_by_target = False
+        fr.save(update_fields=["status", "seen_by_target"])
     return redirect(request.META.get('HTTP_REFERER', 'authors_list'))
 
+@login_required
+def follow_requests(request):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    pending = FollowRequest.objects.filter(to_author=me, status="PENDING").select_related("from_author__user")
+    pending.filter(seen_by_target=False).update(seen_by_target=True)
+    return render(request, "socialdistribution/follow_requests.html", {
+        "follow_requests": pending,
+        "my_author": me,
+    })
+
+@require_POST
+@login_required
+def handle_follow_request(request, request_id):
+    me, _ = Author.objects.get_or_create(user=request.user)
+    fr = get_object_or_404(FollowRequest, id=request_id, to_author=me)
+
+    action = request.POST.get("action")
+    if action == "accept":
+        fr.status = "ACCEPTED"
+        fr.save(update_fields=["status"])
+        fr.from_author.following.add(fr.to_author)
+    elif action == "reject":
+        fr.status = "REJECTED"
+        fr.save(update_fields=["status"])
+    else:
+        return HttpResponseBadRequest("Invalid action")
+
+    return redirect("follow_requests")
 
 @login_required
 def unfollow_local_author(request, author_id):

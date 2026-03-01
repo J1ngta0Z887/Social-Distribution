@@ -110,3 +110,36 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ["created_at"]
+
+
+class ProcessedEvent(models.Model):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="processed_events")
+    event_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['author', 'event_id'], name='unique_author_event')
+        ]
+
+class FollowRequest(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("ACCEPTED", "Accepted"),
+        ("REJECTED", "Rejected"),
+    ]
+
+    from_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="sent_follow_requests")
+    to_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="received_follow_requests")
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="PENDING",
+    )
+    seen_by_target = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['from_author', 'to_author'], name='unique_follow_request')
+        ]

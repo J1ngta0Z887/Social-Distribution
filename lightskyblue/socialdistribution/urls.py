@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
-from .views import html_views, api_views
+from .views import html_views
 
 urlpatterns = [
     #HTML pages
@@ -23,5 +23,9 @@ urlpatterns = [
     path("entries/<int:entry_id>/like/", html_views.toggle_entry_like, name="toggle_entry_like"),
     path("comments/<int:comment_id>/like/", html_views.toggle_comment_like, name="toggle_comment_like"),
     path("entries/<int:entry_id>/comment/", html_views.add_comment, name="add_comment"),
+
+
+    path("follow-requests/", html_views.follow_requests, name="follow_requests"),
+    path("follow-requests/<int:request_id>/handle/", html_views.handle_follow_request, name="handle_follow_request"),
 
 ]

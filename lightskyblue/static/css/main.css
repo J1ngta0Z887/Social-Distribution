@@ -40,6 +40,26 @@ body {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.follow-requests-link {
+  position: relative;
+}
+
+.notif-badge {
+  display: inline-block;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .container {
   padding: 40px 20px;
 }
