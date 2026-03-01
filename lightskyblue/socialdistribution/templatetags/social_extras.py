@@ -20,7 +20,7 @@ def is_following(user_author, other_author):
     """
     if not user_author or not other_author:
         return False
-    return user_author.is_following(other_author)
+    return other_author in user_author.following.all()
 
 @register.filter
 def has_pending_follow_request(my_author, other_author):
