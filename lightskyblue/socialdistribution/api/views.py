@@ -116,7 +116,8 @@ class AuthorFollowingsAPI(View):
         return JsonResponse(resp)
 
 
-class AuthorFollowingPerUserAPI:
+class AuthorFollowingPerUserAPI(View):
+    
     pass
 
 # per https://uofa-cmput404.github.io/general/project.html#followers-api
