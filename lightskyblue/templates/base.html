@@ -22,6 +22,9 @@
             <a class="link" href="{% url 'public_author_profile' user.username %}">
             My Profile
             </a>
+            <!-- Local Authors button -->
+            <a class="link" href="{% url 'authors_list' %}">Local Authors</a>
+
             <a class="link follow-requests-link" href="{% url 'follow_requests' %}">
             Follow Requests
             {% if unread_follow_requests_count > 0 %}
