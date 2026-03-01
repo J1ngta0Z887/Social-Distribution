@@ -1,6 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% load social_extras %}
+
 {% block title %}Feed{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'socialdistribution/css/feed.css' %}">
+{% endblock %}
 
 {% block content %}
   <div class="card">
