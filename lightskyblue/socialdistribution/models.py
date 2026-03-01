@@ -18,6 +18,7 @@ class Author(models.Model):
         related_name="followers",
         blank=True)
 
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["display_name", "host"], name="unique_display_name_host")

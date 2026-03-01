@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ connection_type }} | lightskyblue{% endblock %}
+
+{% block content %}
+  <div class="card profile-card">
+
+    <h1>{{ connection_type }} of {{ author.user.username }}</h1>
+    <ul>
+    {% for connection in connections %}
+      <li>{{ connection.user.username }}</li>
+    {% endfor %}
+    </ul>
+  </div>
+{% endblock %}
