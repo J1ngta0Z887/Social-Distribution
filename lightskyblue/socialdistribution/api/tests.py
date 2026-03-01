@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Author
+from ..models import Author, FollowRequest
 
 
 # note: test cases were generated with codex and then checked
@@ -46,7 +46,7 @@ class AuthorAPITest(TestCase):
 
     def test_missing_author_returns_empty_object(self):
         response = self.client.get("/api/authors/999999")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {})
 
     def test_put_author_logged_out_returns_401(self):
@@ -123,3 +123,46 @@ class AuthorAPITest(TestCase):
         payload = response.json()
         self.assertEqual(payload["type"], "following")
         self.assertEqual(payload["authors"], [])
+
+    def test_follow_request_api(self):
+        # first we test usage with follows pending
+        other_user = get_user_model().objects.create_user(
+            username="follower",
+            password="passpass",
+        )
+        other_author = Author.objects.create(
+            user=other_user,
+            display_name="Follower",
+            host="http://testserver",
+        )
+        self.addCleanup(other_author.delete)
+        self.addCleanup(other_user.delete)
+
+        follow_request = FollowRequest.objects.create(
+            from_author=other_author,
+            to_author=self.author,
+        )
+        self.addCleanup(follow_request.delete)
+
+        response = self.client.get(f"/api/authors/{self.author.id}/follow_requests")
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(payload["type"], "requests")
+        self.assertEqual(len(payload["requests"]), 1)
+
+        request_payload = payload["requests"][0]
+        self.assertEqual(request_payload["type"], "follow")
+        self.assertEqual(request_payload["actor"]["id"], f"http://testserver/api/authors/{other_author.id}")
+        self.assertEqual(request_payload["object"]["id"], f"http://testserver/api/authors/{self.author.id}")
+        self.assertIn("wants to follow", request_payload["summary"])
+
+        # now we test usage with a user trying to read another users follows
+        self.client.logout()
+        self.client.force_login(other_user)
+
+        response = self.client.get(f"/api/authors/{self.author.id}/follow_requests")
+        self.assertEqual(response.status_code, 403)
+
+        self.client.logout()
+        self.client.force_login(self.user)

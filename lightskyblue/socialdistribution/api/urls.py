@@ -2,7 +2,8 @@
 
 from django.urls import re_path, path, include
 from . import views
-from .views import AuthorsAPI, AuthorAPI, AuthorFollowingsAPI, AuthorFollowersAPI, AuthorFollowingPerUserAPI
+from .views import AuthorsAPI, AuthorAPI, AuthorFollowingsAPI, AuthorFollowersAPI, AuthorFollowingPerUserAPI, \
+    AuthorFollowRequestAPI
 
 # https://regex101.com/r/1tqPOL/1 (matches either author id or name)
 author_id_regex = r"(?P<author_id>[\w\s]+)"
@@ -24,6 +25,7 @@ urlpatterns = [
                         ])),
                         path("following", AuthorFollowingsAPI.as_view()),
                         path("followers", AuthorFollowersAPI.as_view()),
+                        path("follow_requests", AuthorFollowRequestAPI.as_view()),
                     ]))
                 ]
             )),

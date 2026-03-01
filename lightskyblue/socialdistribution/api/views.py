@@ -12,14 +12,17 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.views import View
-from ..models import Author
+from ..models import Author, FollowRequest
 
 
 def get_author_model_from_id(author_id: int | str) -> Author | None:
-    if author_id.isdigit():
-        return Author.objects.get(id=int(author_id))
-    else:
-        return Author.objects.get(display_name=author_id)
+    try:
+        if author_id.isdigit():
+            return Author.objects.get(id=int(author_id))
+        else:
+            return Author.objects.get(display_name=author_id)
+    except ObjectDoesNotExist:
+        return None
 
 def user_is_author(user, author: Author) -> bool:
     return user.id == author.id
@@ -68,10 +71,9 @@ class AuthorAPI(View):
         author.update_profile(new_values)
 
     def get(self, req, author_id):
-        try:
-            author = self._pull(author_id)
-        except ObjectDoesNotExist:
-            return JsonResponse({})
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=404)
         return JsonResponse(author.serialize(), safe=True)
 
     def put(self, req: HTTPResponse, author_id: any):
@@ -156,9 +158,11 @@ class AuthorFollowRequestAPI(View):
         if not user_is_author(req.user, author):
             return JsonResponse({}, status=403)
 
+        follow_requests = FollowRequest.objects.filter(to_author=author)
+
         resp = {}
         resp["type"] = "requests"
         resp["requests"] = []
-        for follow_request in author.follow_requests.all():
+        for follow_request in follow_requests:
             resp["requests"].append(follow_request.serialize())
         return JsonResponse(resp)
