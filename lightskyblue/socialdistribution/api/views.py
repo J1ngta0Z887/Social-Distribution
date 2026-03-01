@@ -54,6 +54,10 @@ class AuthorAPI(View):
     def _pull(self, author_id) -> Author:
         return Author.objects.get(id=author_id)
 
+    def _push(self, author: Author, new_values: dict):
+        author.update_profile(new_values)
+
+
     def get(self, req, author_id):
         try:
             author = self._pull(author_id)
@@ -75,5 +79,24 @@ class AuthorAPI(View):
         except json.JSONDecodeError:
             payload = {}
 
-        author.update_profile(payload)
+        self._push(author, payload)
         return JsonResponse(author.serialize(), safe=True)
+
+# per https://uofa-cmput404.github.io/general/project.html#following-api
+class AuthorFollowingsAPI(View):
+
+    def _pull(self, author_id: int) -> Author:
+        return Author.objects.get(id=author_id)
+
+    def get(self, req: HTTPResponse, author_id: int):
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({})
+        resp = {}
+        resp["type"] = "authors"
+        resp["authors"] = []
+        for author in author.following.all():
+            resp["authors"].append(author.serialize())
+        return JsonResponse(resp)
+
+
