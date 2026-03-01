@@ -66,7 +66,6 @@ class Entry(models.Model):
         ("PUBLIC", "Public"),
         ("FRIENDS", "Friends"),
         ("UNLISTED", "Unlisted"),
-        ("FOLLOWERS", "Followers")
     ]
 
     CONTENT_TYPE_CHOICES = [

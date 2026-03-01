@@ -77,6 +77,7 @@
 
               <form method="post" action="{% url 'delete_entry' entry.id %}" style="display:inline;">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
                 <button type="submit" class="btn-primary" style="background-color: #dc3545; border: none; cursor: pointer;">
                   Delete
                 </button>

@@ -120,7 +120,7 @@ def create_entry(request):
             entry = form.save(commit=False)
             entry.author = me
             entry.save()
-            return redirect("feed")
+            return redirect("home")
     else:
         form = EntryForm()
 
@@ -160,8 +160,6 @@ def can_access_entry(me: Author, entry: Entry) -> bool:
 
     if entry.visibility == "UNLISTED":
         return entry.author_id in following_ids  
-    elif entry.visibility == "FOLLOWERS":
-        return entry.author_id in following_ids
     elif entry.visibility == "FRIENDS":
         return entry.author_id in friend_ids
     return False
@@ -179,8 +177,7 @@ def feed(request):
     entries = Entry.objects.filter(author__host=me.host).filter(
         Q(visibility="PUBLIC") |
         Q(visibility="UNLISTED", author__id__in=following_ids) |
-        Q(visibility="FRIENDS", author__id__in=friend_ids) |
-        Q(visibility="FOLLOWERS", author__id__in=following_ids)
+        Q(visibility="FRIENDS", author__id__in=friend_ids)
     ).order_by("-created_at")
     
     return render(request, "socialdistribution/feed.html", {
@@ -261,7 +258,7 @@ def author_friends(request, author_id):
     if me.host != author.host:
         return HttpResponseForbidden("Can only view local authors")
 
-    friends = author.followers.filter(following=author).select_related("user").order_by("user__username")
+    friends = author.following.filter(followers=author).select_related("user").order_by("user__username")
     return render(request, "socialdistribution/author_connections.html", {
         "connection_type": "Friends",
         "author": author,
@@ -319,7 +316,7 @@ def delete_entry(request, entry_id):
 
     if request.method == "POST":
         entry.delete()
-        return redirect("my_entries")
+        return redirect(request.POST.get("next") or "home")
 
     # Task 23: Author can see entry before deletion (It's passed in context)
     return render(request, "socialdistribution/confirm_delete.html", {"entry": entry})
