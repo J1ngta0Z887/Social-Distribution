@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from socialdistribution.models import Author, Entry
+from ...models import Author, Entry
 
 
 class Command(BaseCommand):
