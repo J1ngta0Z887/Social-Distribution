@@ -1,4 +1,4 @@
-from socialdistribution.models import Author, FollowRequest
+from .models import Author, FollowRequest
 
 
 def unread_follow_requests_count(request):
