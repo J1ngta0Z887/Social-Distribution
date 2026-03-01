@@ -39,6 +39,11 @@ class Author(models.Model):
 
         return author_follows_other and other_follows_author
 
+    def is_following(self, other: Self):
+        if other is None:
+            return False
+        return self.following.filter(pk=other.pk).exists()
+
     def serialize(self):
         author = {}
         author["type"] = "author"
