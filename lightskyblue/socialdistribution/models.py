@@ -1,39 +1,59 @@
+from typing import Self
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.forms import model_to_dict
+
+
 class Author(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    display_name = models.CharField(max_length=80, blank=True)
     host = models.URLField(default="http://127.0.0.1:8000")
-
+    # the max length is arbitrary, just went for size near old tweets max length
+    bio = models.TextField(max_length=160, blank=True)
+    github_url = models.URLField(blank=True)
+    picture_url = models.URLField(blank=True)
     following = models.ManyToManyField(
         "self",
         symmetrical=False,
         related_name="followers",
-        blank=True
-    )
+        blank=True)
 
-    def is_following(self, other_author) -> bool:
-        return self.following.filter(id=other_author.id).exists()
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["display_name", "host"], name="unique_display_name_host")
+        ]
 
-    def is_friends_with(self,other_author) -> bool:
-        return (
-            self.following.filter(id=other_author.id).exists() and
-            other_author.following.filter(id=self.id).exists()
-        )
+    def update_profile(self, new_data):
+        self.display_name = new_data.get("displayName", self.display_name)
+        self.bio = new_data.get("bio", self.bio)
+        self.github_url = new_data.get("github", self.github_url)
+        self.picture_url = new_data.get("profileImage", self.picture_url)
+        self.save()
 
-class AuthorProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    display_name = models.CharField(max_length=80, blank=True)
-    bio = models.TextField(blank=True)
-    github_url = models.URLField(blank=True)
-    website_url = models.URLField(blank=True)
+    def is_friends_with(self, other: Self):
+        if other is None:
+            return False
+        # credit: gpt-5.2-codex-low for the really easy pk=other.pk lol
+        author_follows_other = self.following.filter(pk=other.pk).exists()
+        other_follows_author = other.following.filter(pk=self.pk).exists()
 
-    picture_url = models.URLField(blank=True)
+        return author_follows_other and other_follows_author
+
+    def serialize(self):
+        author = {}
+        author["type"] = "author"
+        author["id"] = f"{self.host}/api/authors/{self.pk}"
+        author["host"] = f"{self.host}/api/"
+        author["displayName"] = self.display_name
+        author["bio"] = self.bio
+        author["github"] = self.github_url
+        author["profileImage"] = self.picture_url
+        author["web"] = f"{self.host}/author/{self.display_name}"
+        return author
 
     def __str__(self):
         return self.display_name or self.user.username
-    
+
 
 class Entry(models.Model):
     VISIBILITY_CHOICES = [

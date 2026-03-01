@@ -1,3 +1,2 @@
 Django>=5.0.1
-django
 markdown-it-py

@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{% static 'socialdistribution/css/profile.css' %}">
 {% endblock %}
 
-{% block title %}{{ profile.display_name|default:profile_user.username }} | Profile{% endblock %}
+{% block title %}{{ author.display_name|default:profile_user.username }} | Profile{% endblock %}
 
 {% block content %}
   <div class="card profile-card">
@@ -18,23 +18,23 @@
 
     <div class="profile-layout">
       <div class="profile-avatar">
-        {% if profile.picture_url %}
-          <img src="{{ profile.picture_url }}" alt="Profile Picture">
+        {% if author.picture_url %}
+          <img src="{{ author.picture_url }}" alt="Profile Picture">
         {% else %}
           <img src="{% static 'socialdistribution/images/default-avatar.png' %}" alt="Default Profile Picture">
         {% endif %}
       </div>
 
       <div class="profile-info">
-        <h1 class="title">{{ profile.display_name|default:profile_user.username }}</h1>
+        <h1 class="title">{{ author.display_name|default:profile_user.username }}</h1>
         <p class="subtitle">@{{ profile_user.username }}</p>
         <div class="links">
-          {% if profile.github_url %}
-            <a class="btn-outline" href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>
+          {% if author.github_url %}
+            <a class="btn-outline" href="{{ author.github_url }}" target="_blank" rel="noopener">GitHub</a>
           {% endif %}
         </div>
-        {% if profile.bio %}
-          <p class="bio">{{ profile.bio }}</p>
+        {% if author.bio %}
+          <p class="bio">{{ author.bio }}</p>
         {% else %}
           <p class="bio muted">No bio yet.</p>
         {% endif %}

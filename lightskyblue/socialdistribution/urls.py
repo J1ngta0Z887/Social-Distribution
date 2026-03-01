@@ -24,6 +24,4 @@ urlpatterns = [
     path("comments/<int:comment_id>/like/", html_views.toggle_comment_like, name="toggle_comment_like"),
     path("entries/<int:entry_id>/comment/", html_views.add_comment, name="add_comment"),
 
-    #API endpoints
-    path("api/authors/<int:author_id>/entries/<int:entry_id>/", api_views.get_entry, name="api_get_entry"),
 ]

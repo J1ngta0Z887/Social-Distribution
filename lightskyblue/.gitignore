@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-.creds
+.idea/
+*.iml
 
 # Virtual Environment
 venv/
@@ -23,13 +24,8 @@ media/
 # VSCode
 .vscode/
 
-.idea/
-
 # Mac
 .DS_Store
 
 # Windows
 Thumbs.db
-
-# IDE
-.idea
