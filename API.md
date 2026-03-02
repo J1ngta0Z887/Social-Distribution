@@ -105,7 +105,7 @@ Request body:
   "web": "https://example.com/authors/new%20author%20name"
 }
 ```
-
+---
 ### Get Who Authors Following
 Endpoint: `GET /author/{AUTHOR_SERIAL}/following`
 Requires Authentication?: Yes
@@ -132,6 +132,37 @@ GET /author/author%20name/following
       "github": "https://github.com/johndoe",
       "profileImage": "https://example.com/images/johnscat.jpg",
       "web": "https://example.com/authors/john%20doe"
+    }
+  ]
+}
+```
+---
+### Get Who's Following Author
+Endpoint: `GET /author/{AUTHOR_SERIAL}/followers`
+Requires Authentication?: No
+
+**Example Request:**
+```http
+GET /author/3/followers
+OR
+GET /author/john%20doe/followers
+```
+
+**Example Response:**
+```json
+
+{
+  "type": "followers",
+  "authors": [
+    {
+      "type": "author",
+      "id": "https://example.com/authors/1",
+      "host": "https://example.com/api",
+      "displayName": "authors name",
+      "bio": "authors detailed bio",
+      "github": "https://github.com/authorname",
+      "profileImage": "https://example.com/images/john.jpg",
+      "web": "https://example.com/authors/author%20name"
     }
   ]
 }
