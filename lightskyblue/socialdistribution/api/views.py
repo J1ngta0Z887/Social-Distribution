@@ -82,24 +82,13 @@ class AuthorInboxAPI(View):
     # NOTE: the authentication used here is NOT CORRECT yet. We
     # need to figure out a way to verify which nodes are allowed
     # to post to our nodes inbox
+    @user_must_be_author("author_id")
     def put(self, req: HTTPResponse, author_id: any):
-        user = req.user
-        if not user.is_authenticated:
-            return JsonResponse({}, status=401)
-
         author = self._pull(author_id)
-        if not author:
-            return JsonResponse({}, status=404)
-
-        if user.id != author.id:
-            return JsonResponse({}, status=403)
-
         try:
             payload = json.loads(req.body.decode("utf-8")) if req.body else {}
         except json.JSONDecodeError:
             payload = {}
-
-
 
         self._push(author, payload)
         return JsonResponse(author.serialize(), safe=True)
