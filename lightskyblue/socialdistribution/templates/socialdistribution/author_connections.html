@@ -1,3 +1,4 @@
+{% extends "base.html" %}
 {% comment %}
 Template: connection list page (followers / following / friends, etc.)
 
@@ -9,8 +10,6 @@ Context expected:
 - author: The profile owner whose connections are being displayed
 - connections: Iterable of connection objects where each has `user.username`
 {% endcomment %}
-
-{% extends "base.html" %}
 
 {# Page title shown in the browser tab #}
 {% block title %}{{ connection_type }} | lightskyblue{% endblock %}

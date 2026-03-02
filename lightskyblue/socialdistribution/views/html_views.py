@@ -545,7 +545,7 @@ def signup(request):
                 })
     
     else:
-        from ..forms import SignupForm
+        # from ..forms import SignupForm  ← remove this line
         form = SignupForm()
     
     return render(request, "socialdistribution/signup.html", {"form": form, "step": 1})
