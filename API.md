@@ -3,7 +3,7 @@
 **Base URL**: `/api`  
 **API Format**:  `json`  
 **Authentication**: Django user account.  
-Some application functionality has not yet
+**Note**: Some application functionality has not yet
 been augmented as an API, instead acting as a
 html view route. This will be changed by part 2
 submission.
