@@ -235,3 +235,66 @@ GET /author/author%20name/follow_requests
 }
 ```
 ---
+# Yet to be augmented API
+As per linked doc: 
+```
+Endpoints:
+-------------------------------------------------
+- `GET /` (`feed`): main timeline; use for browsing posts.
+  Request: none. Response: `my_author: Author`, `entries: QuerySet[Entry]`.
+  Examples: `GET /`, refresh `GET /` after posting.
+
+- `GET /authors/` (`authors_list`): browse local authors.
+  Query: `q: str` (ex `"har"`) for username filtering.
+  Response: `authors: QuerySet[Author]`, `my_author: Author`.
+  Examples: `GET /authors/`, `GET /authors/?q=chris`.
+
+- `POST /authors/<author_id>/follow/` and `/unfollow/`:
+  follow/unfollow local authors; do not use for self or remote authors.
+  Path: `author_id: int` (ex `12`). Response: `302` redirect.
+  Examples: `POST /authors/12/follow/`, `POST /authors/12/unfollow/`.
+
+- `GET /follow-requests/`, `POST /follow-requests/<request_id>/handle/`:
+  review and handle follow requests.
+  Path: `request_id: int` (ex `7`), Form: `action: str` (`accept|reject`).
+  Response: list template or `302` redirect.
+  Examples: `GET /follow-requests/`, `POST ... action=accept`.
+
+- `GET /author/<username>/`, `/authors/<author_id>/(followers|following|friends)/`:
+  view profile and social graph.
+  Path: `username: str` or `author_id: int`.
+  Response includes author objects and count/list context fields.
+  Examples: `GET /author/harneetk/`, `GET /authors/12/friends/`.
+
+- `GET|POST /profile/edit/`:
+  edit current user profile only.
+  Form: `display_name: str`, `bio: str`, `picture_url: url`, `github_url: url`.
+  Response: form template or `302` redirect to own profile.
+  Examples: `GET /profile/edit/`, `POST /profile/edit/`.
+
+- `GET /entries/`, `GET|POST /entries/new/`,
+  `GET /authors/<author_id>/entries/`, `GET /entries/<entry_id>/`:
+  list own entries, create entries, view author entries, view one entry.
+  Paths: `author_id: int`, `entry_id: int`.
+  Create form: `title: str`, `content: str`, `image_url: url`,
+  `visibility: str`, `content_type: str`.
+  Examples: `GET /entries/`, `POST /entries/new/`, `GET /entries/33/`.
+
+- `GET|POST /entries/<entry_id>/edit/` and `/delete/`:
+  owner-only edit/delete operations.
+  Path: `entry_id: int`; delete form optional `next: str`.
+  Response: form/confirm template or `302` redirect.
+  Examples: `GET /entries/33/edit/`, `POST /entries/33/delete/`.
+
+- `POST /entries/<entry_id>/comment/`, `/entries/<entry_id>/like/`,
+  `/comments/<comment_id>/like/`:
+  comment/like toggles on accessible content.
+  Paths: `entry_id: int`, `comment_id: int`.
+  Form: `content: str` (comment), optional `next: str` (redirect target).
+  Response: `302` redirect.
+  Examples: `POST /entries/33/comment/`, `POST /entries/33/like/`.
+
+Note:
+- `home(request)` exists but root URL is currently wired to `feed`.
+"""
+```
