@@ -3,6 +3,7 @@
 **Base URL**: `/api`  
 **API Format**:  `json`  
 **Authentication**: Django user account.  
+**Test**: [Click here to jump to tests.](lightskyblue/socialdistribution/api/tests.py)  
 **Note**: Some application functionality has not yet
 been augmented as an API, instead acting as a
 html view route. This will be changed by part 2
