@@ -1,49 +1,51 @@
+/* Reset default margin and set global font + background */
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
   background: #f4f7fb;
   color: #111827;
 }
-
+/* Top navigation bar styling */
 .navbar {
   background: #94ace5;
   color: white;
   padding: 14px 28px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: space-between; /* Push brand left, nav-right right */
+  align-items: center; /* Vertically center items */
 }
 
+/* lightskyblue */
 .brand {
   font-weight: 700;
   letter-spacing: 0.3px;
 }
-
+/* Right side of navbar (links + user info) */
 .nav-right {
   display: flex;
   align-items: center;
   gap: 14px;
 }
-
+/* Username text */
 .user {
   opacity: 0.9;
 }
-
+/* General navigation links */
 .link {
   color: white;
   text-decoration: none;
   padding: 6px 10px;
   border-radius: 6px;
 }
-
+/* Hover effect for links */
 .link:hover {
   background: rgba(255, 255, 255, 0.12);
 }
-
+/* Follow requests link container */
 .follow-requests-link {
   position: relative;
 }
-
+/* Notification badge (red circle with number) */
 .notif-badge {
   display: inline-block;
   min-width: 18px;
@@ -59,11 +61,11 @@ body {
   text-align: center;
   vertical-align: middle;
 }
-
+/* Page content wrapper */
 .container {
   padding: 40px 20px;
 }
-
+/* Card layout (used for forms or content boxes) */
 .card {
   max-width: 460px;
   margin: 60px auto;
@@ -72,29 +74,30 @@ body {
   padding: 28px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
-
+/* Main title inside card */
 .title {
   margin: 0 0 8px 0;
 }
-
+/* Subtitle text */
 .subtitle {
   margin: 0 0 18px 0;
   color: #4b5563;
 }
-
+/* Spacing between form fields */
 .form p {
   margin-bottom: 14px;
 }
 
+/* Input field styling */
 .form input {
-  width: 100%;
+  width: 100%; /* Full width */
   padding: 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   margin-top: 6px;
-  box-sizing: border-box;
+  box-sizing: border-box;  /* Prevent overflow */
 }
-
+/* Main button style */
 .btn {
   width: 100%;
   padding: 10px 12px;
@@ -105,13 +108,13 @@ body {
   cursor: pointer;
   font-weight: 600;
 }
-
+/* Button hover effect */
 .btn:hover {
   background: #84a1e3;
 }
-
+/* Logout form reset spacing */
 .logout-form { margin: 0; }
-
+/* Button that looks like a link */
 .btn-link {
   background: none;
   border: none;
@@ -151,7 +154,7 @@ a.btn-primary[href*="edit"],
 button.btn-primary[style*="#6c757d"] {
   background-color: #6c757d;
 }
-
+/* Gray button (Edit button detected via URL or style) */
 a.btn-primary[href*="edit"]:hover {
   background-color: #5c636a;
 }
@@ -160,7 +163,7 @@ a.btn-primary[href*="edit"]:hover {
 button.btn-primary[style*="#dc3545"] {
   background-color: #dc3545;
 }
-
+/* Hover for delete button */
 button.btn-primary[style*="#dc3545"]:hover {
   background-color: #bb2d3b;
 }
@@ -169,7 +172,7 @@ button.btn-primary[style*="#dc3545"]:hover {
 button.btn-primary[style*="#198754"] {
   background-color: #198754;
 }
-
+/* Hover for green button */
 button.btn-primary[style*="#198754"]:hover {
   background-color: #157347;
 }

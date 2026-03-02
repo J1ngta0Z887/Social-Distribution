@@ -12,7 +12,31 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.views import View
-from ..models import Author
+from ..models import Author, FollowRequest
+
+
+def get_author_model_from_id(author_id: int | str) -> Author | None:
+    try:
+        if author_id.isdigit():
+            return Author.objects.get(id=int(author_id))
+        else:
+            return Author.objects.get(display_name=author_id)
+    except ObjectDoesNotExist:
+        return None
+
+def user_is_author(user, author: Author) -> bool:
+    return user.id == author.id
+
+
+# per https://uofa-cmput404.github.io/general/project.html#inbox-api
+# likely the most important api of our project (thus why its at the top).
+# it's very multi-faceted, taking on roles from other apis as per spec
+class AuthorInboxAPI(View):
+
+    # as of now, there's no "inbox" in a practical sense; all valid data
+    # sent here is automatically applied, assuming its valid
+    def put(self):
+        pass
 
 
 # per https://uofa-cmput404.github.io/general/project.html#authors-api
@@ -53,19 +77,15 @@ class AuthorsAPI(View):
 class AuthorAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def _push(self, author: Author, new_values: dict):
         author.update_profile(new_values)
 
     def get(self, req, author_id):
-        try:
-            author = self._pull(author_id)
-        except ObjectDoesNotExist:
-            return JsonResponse({})
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=404)
         return JsonResponse(author.serialize(), safe=True)
 
     def put(self, req: HTTPResponse, author_id: any):
@@ -92,15 +112,16 @@ class AuthorAPI(View):
 class AuthorFollowingsAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def get(self, req: HTTPResponse, author_id: any):
         author = self._pull(author_id)
+
         if not author:
             return JsonResponse({})
+        elif not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
         resp = {}
         resp["type"] = "following"
         resp["authors"] = []
@@ -108,19 +129,40 @@ class AuthorFollowingsAPI(View):
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
 
+# per https://uofa-cmput404.github.io/general/project.html#following-api (foreign authors
+# TODO: implement
+class AuthorFollowingPerUserAPI(View):
+
+    def _pull(self, author_id: int | str) -> Author | None:
+        return get_author_model_from_id(author_id)
+
+    def get(self, req: HTTPResponse, author_id: any, target_author_id: any):
+        author = self._pull(author_id)
+        target_author = self._pull(target_author_id)
+
+        if not author or not target_author:
+            return JsonResponse({}, status=404)
+        if not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
+        if not author.is_following(target_author):
+            return JsonResponse({}, status=404)
+
+        return JsonResponse(target_author.serialize(), safe=True)
+
+
+
 # per https://uofa-cmput404.github.io/general/project.html#followers-api
 class AuthorFollowersAPI(View):
 
     def _pull(self, author_id: int | str) -> Author | None:
-        if author_id.isdigit():
-            return Author.objects.get(id=int(author_id))
-        else:
-            return Author.objects.get(display_name=author_id)
+        return get_author_model_from_id(author_id)
 
     def get(self, req: HTTPResponse, author_id: int):
         author = self._pull(author_id)
         if not author:
-            return JsonResponse({})
+            return JsonResponse({}, status=403)
+
         resp = {}
         resp["type"] = "followers"
         resp["authors"] = []
@@ -128,3 +170,26 @@ class AuthorFollowersAPI(View):
             resp["authors"].append(author.serialize())
         return JsonResponse(resp)
     pass
+
+
+# per https://uofa-cmput404.github.io/general/project.html#follow-request-api
+class AuthorFollowRequestAPI(View):
+    def _pull(self, author_id: int | str) -> Author | None:
+        return get_author_model_from_id(author_id)
+
+
+    def get(self, req: HTTPResponse, author_id: any):
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=403)
+        if not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
+        follow_requests = FollowRequest.objects.filter(to_author=author)
+
+        resp = {}
+        resp["type"] = "requests"
+        resp["requests"] = []
+        for follow_request in follow_requests:
+            resp["requests"].append(follow_request.serialize())
+        return JsonResponse(resp)

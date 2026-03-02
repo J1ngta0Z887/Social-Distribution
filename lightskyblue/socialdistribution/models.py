@@ -132,7 +132,6 @@ class FollowRequest(models.Model):
     STATUS_CHOICES = [
         ("PENDING", "Pending"),
         ("ACCEPTED", "Accepted"),
-        ("REJECTED", "Rejected"),
     ]
 
     from_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="sent_follow_requests")
@@ -142,10 +141,18 @@ class FollowRequest(models.Model):
         choices=STATUS_CHOICES,
         default="PENDING",
     )
-    seen_by_target = models.BooleanField(default=False)
+    seen = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['from_author', 'to_author'], name='unique_follow_request')
         ]
+
+    def serialize(self):
+        follow_req = {}
+        follow_req["type"] = "follow"
+        follow_req["summary"] = f"{self.from_author.display_name} wants to follow {self.to_author.display_name}"
+        follow_req["actor"] = self.from_author.serialize()
+        follow_req["object"] = self.to_author.serialize()
+        return follow_req

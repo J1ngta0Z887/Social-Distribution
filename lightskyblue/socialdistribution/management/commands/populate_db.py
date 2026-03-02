@@ -1,13 +1,36 @@
+"""populate_db management command.
+
+When:
+- Use in local/dev to seed predictable test users and posts.
+
+How:
+- Run: `python manage.py populate_db`
+
+Why/why-not:
+- Use for quick demo data and UI testing.
+- Do not use in production: inserts fixed sample accounts/content.
+
+Behavior:
+- Creates or reuses users: `alice`, `bob`, `charlie`.
+- Creates or reuses corresponding `Author` rows.
+- Ensures each author has three entries with visibilities:
+  `FRIENDS`, `PUBLIC`, `UNLISTED`.
+- Uses `get_or_create`, so reruns are mostly idempotent.
+
+Output:
+- Success message on completion.
+"""
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from socialdistribution.models import Author, Entry
+from ...models import Author, Entry
 
 
 class Command(BaseCommand):
     help = 'Populate the database with test authors and entries'
 
     def handle(self, *args, **options):
-        # Create 3 users and authors
+        """Seed local test users/authors and starter entries."""
         authors_data = [
             {'username': 'alice', 'display_name': 'Alice Smith', 'bio': 'Tech enthusiast and developer'},
             {'username': 'bob', 'display_name': 'Bob Johnson', 'bio': 'Designer and creative thinker'},
@@ -21,23 +44,21 @@ class Command(BaseCommand):
         ]
 
         for author_info in authors_data:
-            # Create or get user
+            # Reuse existing records so reruns don't duplicate core rows.
             user, created = User.objects.get_or_create(
                 username=author_info['username'],
                 defaults={'first_name': author_info['display_name'].split()[0]}
             )
 
-            # Create or get author
             author, _ = Author.objects.get_or_create(user=user)
 
-            # Fill in author details
+            # Only backfill profile fields when missing.
             if not author.display_name:
                 author.display_name = author_info["display_name"]
             if not author.bio:
                 author.bio = author_info["bio"]
             author.save()
 
-            # Create 3 entries for this author
             visibilities = ['FRIENDS', 'PUBLIC', 'UNLISTED']
             for i, entry_info in enumerate(entries_data, 1):
                 Entry.objects.get_or_create(

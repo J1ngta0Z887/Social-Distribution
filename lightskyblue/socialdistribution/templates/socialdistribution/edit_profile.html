@@ -1,14 +1,32 @@
+{% comment %}
+Template: Edit Profile form
+
+Purpose:
+- Renders a page for editing the current user's profile details.
+- Submits the bound Django `form` via POST with CSRF protection.
+
+Context expected:
+- form: A Django Form instance for editing a profile
+{% endcomment %}
+
 {% extends "base.html" %}
 
+{# Page title shown in the browser tab #}
 {% block title %}Edit Profile{% endblock %}
 
 {% block content %}
   <div class="card profile-card">
+    {# Visible page heading #}
     <h1 class="title">Edit Profile</h1>
 
+    {# POST form for profile updates; protected by CSRF token #}
     <form method="post" class="form">
       {% csrf_token %}
+
+      {# Render form fields wrapped in <p> tags (quick default layout) #}
       {{ form.as_p }}
+
+      {# Primary action submits the form #}
       <button class="btn" type="submit">Save</button>
     </form>
   </div>

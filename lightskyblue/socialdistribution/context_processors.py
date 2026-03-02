@@ -1,4 +1,4 @@
-from socialdistribution.models import Author, FollowRequest
+from .models import Author, FollowRequest
 
 
 def unread_follow_requests_count(request):
@@ -9,6 +9,6 @@ def unread_follow_requests_count(request):
     count = FollowRequest.objects.filter(
         to_author=author,
         status="PENDING",
-        seen_by_target=False,
+        seen=False,
     ).count()
     return {"unread_follow_requests_count": count}

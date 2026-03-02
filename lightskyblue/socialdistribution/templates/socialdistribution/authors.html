@@ -1,13 +1,32 @@
+{% comment %}
+Template: Local Authors list + follow/unfollow controls
+
+Purpose:
+- Shows a searchable list of local authors.
+- For each author, renders a follow/unfollow button depending on whether `my_author` already follows them.
+- Hides follow controls for the currently logged-in author (`a.id == my_author.id`).
+
+Context expected:
+- authors: Iterable of Author objects (each has `user.username` and `id`)
+- my_author: The current user's Author object (has `id` and a `following` relation)
+- request: Used to preserve the current search query in the input (`request.GET.q`)
+
+Routes expected:
+- follow_local_author (POST, takes author id)
+- unfollow_local_author (POST, takes author id)
+{% endcomment %}
+
 {% extends "base.html" %}
 {% load static %}
 {% load social_extras %}
 
+{# Page-specific stylesheet. Loaded via Django's staticfiles system. #}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'socialdistribution/css/localauthors.css' %}">
 {% endblock %}
 
 {% block content %}
-
+  {# Search box uses GET so results can be shared/bookmarked via URL query (?q=...). #}
   <div class="search-container">
     <form method="get">
       <input 
@@ -20,12 +39,15 @@
     </form>
   </div>
 
-
+  {# Render each author entry with conditional follow/unfollow actions. #}
   {% for a in authors %}
     <div class="authors-container">
       <span>{{ a.user.username }}</span>
 
+      {# Do not allow following yourself #}
       {% if a.id != my_author.id %}
+
+        {# If already following, show "Unfollow"; otherwise show "Follow" #}
         {% if my_author|is_following:a %}
           <form method="post" action="{% url 'unfollow_local_author' a.id %}" style="display:inline; margin:0;">
             {% csrf_token %}
