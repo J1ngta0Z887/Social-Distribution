@@ -23,19 +23,19 @@
           <div style="margin:0 0 6px 0;">
             <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px;">
               <strong>
-                <a href="{% url 'public_author_profile' entry.author.user.username %}">{{ entry.author.user.username }}</a>
+                <a href="{% url 'public_author_profile' entry.author.user.username %}" style="font-size: 1.1em;">{{ entry.author.user.username }}</a>
               </strong>
               {% if entry.author.user != request.user %}
                 <span style="color:#4b5563;">·</span>
                 {% if my_author|is_following:entry.author %}
-                  <form method="post" action="{% url 'unfollow_local_author' entry.author.id %}" style="display:inline; margin:0;">
-                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">unfollow</button>
+                  <form method="post" action="{% url 'unfollow_local_author' entry.author.id %}" style="display:inline; margin:0; font-size: 0.9em;">
+                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">Unfollow</button>
                   </form>
                 {% elif my_author|has_pending_follow_request:entry.author %}
-                  <span style="color:#6c757d;">pending...</span>
+                  <span style="color:#000000; font-size: 0.9em;">Request Pending</span>
                 {% else %}
-                  <form method="post" action="{% url 'follow_local_author' entry.author.id %}" style="display:inline; margin:0;">
-                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">follow</button>
+                  <form method="post" action="{% url 'follow_local_author' entry.author.id %}" style="display:inline; margin:0; font-size: 0.9em;">
+                    {% csrf_token %}<button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">Follow</button>
                   </form>
                 {% endif %}
               {% endif %}
