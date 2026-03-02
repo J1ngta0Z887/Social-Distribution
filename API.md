@@ -105,3 +105,35 @@ Request body:
   "web": "https://example.com/authors/new%20author%20name"
 }
 ```
+
+### Get Who Authors Following
+Endpoint: `GET /author/{AUTHOR_SERIAL}/following`
+Requires Authentication?: Yes
+
+**Example Request:**
+```http
+GET /author/1/following
+OR
+GET /author/author%20name/following
+```
+
+**Example Response:**
+```json
+
+{
+  "type": "following",
+  "authors": [
+    {
+      "type": "author",
+      "id": "https://example.com/authors/3",
+      "host": "https://example.com/api",
+      "displayName": "john doe",
+      "bio": "beautiful weather today, huh?",
+      "github": "https://github.com/johndoe",
+      "profileImage": "https://example.com/images/johnscat.jpg",
+      "web": "https://example.com/authors/john%20doe"
+    }
+  ]
+}
+```
+---
