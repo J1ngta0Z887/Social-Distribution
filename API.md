@@ -38,7 +38,7 @@ GET /authors?page=1&size=5
       "id": "https://example.com/authors/1",
       "host": "https://example.com/api",
       "displayName": "authors name",
-      "bio": "authors detailed bio
+      "bio": "authors detailed bio",
       "github": "https://github.com/johndoe",
       "profileImage": "https://example.com/images/john.jpg",
       "web": "https://example.com/authors/author%20name
