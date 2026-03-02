@@ -296,5 +296,4 @@ Endpoints:
 
 Note:
 - `home(request)` exists but root URL is currently wired to `feed`.
-"""
 ```
