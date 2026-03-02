@@ -164,7 +164,7 @@ class AuthorAPITest(TestCase):
         self.client.force_login(self.other_user)
 
         response = self.client.get(f"/api/authors/{self.author.id}/follow_requests")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         self.client.logout()
         self.client.force_login(self.user)
@@ -188,7 +188,7 @@ class AuthorAPITest(TestCase):
         self.client.force_login(self.other_user)
 
         response = self.client.get(f"/api/authors/{self.author.id}/following/{self.other_author.id}")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         self.client.logout()
         self.client.force_login(self.user)

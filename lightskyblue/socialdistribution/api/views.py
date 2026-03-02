@@ -2,6 +2,7 @@
 # all apis must be written in an extensible fashion when pulling or pushing
 # data from or to the database, so that they can be reused in the user-facing
 # views.
+from functools import wraps
 from http.client import HTTPResponse
 import json
 from urllib.request import Request
@@ -28,15 +29,55 @@ def user_is_author(user, author: Author) -> bool:
     return user.id == author.id
 
 
+# ref: https://deepankarm.github.io/posts/type-safe-python-decorators/
+# the purpose of this decorator is to make sure the user is authorized to access / modify
+# the information at the route.
+# this works elegantly, but still seems a bit like dark magic to me lol
+def user_must_be_author(capture_name: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            user = self.request.user
+            author_id = kwargs.get(capture_name)
+            author = get_author_model_from_id(author_id)
+            if not author:
+                return JsonResponse({}, status=404)
+            if user.id != author.user.id:
+                return JsonResponse({}, status=401)
+            return func(self, *args, **kwargs)
+
+        return wrapper
+    return decorator
+
 # per https://uofa-cmput404.github.io/general/project.html#inbox-api
 # likely the most important api of our project (thus why its at the top).
 # it's very multi-faceted, taking on roles from other apis as per spec
 class AuthorInboxAPI(View):
 
-    # as of now, there's no "inbox" in a practical sense; all valid data
-    # sent here is automatically applied, assuming its valid
-    def put(self):
-        pass
+    # NOTE: the authentication used here is NOT CORRECT yet. We
+    # need to figure out a way to verify which nodes are allowed
+    # to post to our nodes inbox
+    def put(self, req: HTTPResponse, author_id: any):
+        user = req.user
+        if not user.is_authenticated:
+            return JsonResponse({}, status=401)
+
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=404)
+
+        if user.id != author.id:
+            return JsonResponse({}, status=403)
+
+        try:
+            payload = json.loads(req.body.decode("utf-8")) if req.body else {}
+        except json.JSONDecodeError:
+            payload = {}
+
+
+
+        self._push(author, payload)
+        return JsonResponse(author.serialize(), safe=True)
 
 
 # per https://uofa-cmput404.github.io/general/project.html#authors-api
@@ -44,7 +85,6 @@ class AuthorsAPI(View):
 
     def _pull(self):
         return Author.objects.all()
-
 
     def get(self, req: HTTPResponse):
         authors = self._pull()
@@ -88,18 +128,9 @@ class AuthorAPI(View):
             return JsonResponse({}, status=404)
         return JsonResponse(author.serialize(), safe=True)
 
+    @user_must_be_author("author_id")
     def put(self, req: HTTPResponse, author_id: any):
-        user = req.user
-        if not user.is_authenticated:
-            return JsonResponse({}, status=401)
-
         author = self._pull(author_id)
-        if not author:
-            return JsonResponse({}, status=404)
-
-        if user.id != author.id:
-            return JsonResponse({}, status=403)
-
         try:
             payload = json.loads(req.body.decode("utf-8")) if req.body else {}
         except json.JSONDecodeError:
@@ -114,13 +145,9 @@ class AuthorFollowingsAPI(View):
     def _pull(self, author_id: int | str) -> Author | None:
         return get_author_model_from_id(author_id)
 
+    @user_must_be_author("author_id")
     def get(self, req: HTTPResponse, author_id: any):
         author = self._pull(author_id)
-
-        if not author:
-            return JsonResponse({})
-        elif not user_is_author(req.user, author):
-            return JsonResponse({}, status=403)
 
         resp = {}
         resp["type"] = "following"
@@ -136,15 +163,13 @@ class AuthorFollowingPerUserAPI(View):
     def _pull(self, author_id: int | str) -> Author | None:
         return get_author_model_from_id(author_id)
 
+    @user_must_be_author("author_id")
     def get(self, req: HTTPResponse, author_id: any, target_author_id: any):
         author = self._pull(author_id)
         target_author = self._pull(target_author_id)
 
-        if not author or not target_author:
+        if not target_author:
             return JsonResponse({}, status=404)
-        if not user_is_author(req.user, author):
-            return JsonResponse({}, status=403)
-
         if not author.is_following(target_author):
             return JsonResponse({}, status=404)
 
@@ -177,14 +202,9 @@ class AuthorFollowRequestAPI(View):
     def _pull(self, author_id: int | str) -> Author | None:
         return get_author_model_from_id(author_id)
 
-
+    @user_must_be_author("author_id")
     def get(self, req: HTTPResponse, author_id: any):
         author = self._pull(author_id)
-        if not author:
-            return JsonResponse({}, status=403)
-        if not user_is_author(req.user, author):
-            return JsonResponse({}, status=403)
-
         follow_requests = FollowRequest.objects.filter(to_author=author)
 
         resp = {}

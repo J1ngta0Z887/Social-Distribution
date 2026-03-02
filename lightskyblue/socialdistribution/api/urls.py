@@ -19,12 +19,12 @@ urlpatterns = [
                 [
                     path("", AuthorAPI.as_view()),
                     path("/", include([
-                        path("following/", include(
+                        #path("following", AuthorFollowingsAPI.as_view()),
+                        path("following", include(
                             [
                                 path("", AuthorFollowingsAPI.as_view()),
                                 re_path(target_author_id_regex, AuthorFollowingPerUserAPI.as_view()),
                         ])),
-                        path("following", AuthorFollowingsAPI.as_view()),
                         path("followers", AuthorFollowersAPI.as_view()),
                         path("follow_requests", AuthorFollowRequestAPI.as_view()),
                     ]))
