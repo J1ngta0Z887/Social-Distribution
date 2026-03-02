@@ -41,8 +41,34 @@ GET /authors?page=1&size=5
       "bio": "authors detailed bio",
       "github": "https://github.com/johndoe",
       "profileImage": "https://example.com/images/john.jpg",
-      "web": "https://example.com/authors/author%20name
+      "web": "https://example.com/authors/author%20name"
     }
   ]
+}
+```
+
+### List Author
+Endpoint: `GET /author/{AUTHOR_SERIAL}`
+Requires Authentication?: No
+
+**Example Request:**
+```http
+GET /authors/1
+OR
+GET /authors/author%20name
+```
+
+**Example Response:**
+```json
+
+{
+  "type": "author",
+  "id": "https://example.com/authors/1",
+  "host": "https://example.com/api",
+  "displayName": "authors name",
+  "bio": "authors detailed bio",
+  "github": "https://github.com/johndoe",
+  "profileImage": "https://example.com/images/john.jpg",
+  "web": "https://example.com/authors/author%20name"
 }
 ```
