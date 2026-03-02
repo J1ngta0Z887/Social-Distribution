@@ -198,7 +198,7 @@ Requires Authentication?: Yes
 ```http
 GET /authors/1/follow_requests
 OR
-GET /author/author%20name/followers
+GET /author/author%20name/follow_requests
 ```
 
 **Example Response:**
