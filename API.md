@@ -236,7 +236,7 @@ GET /author/author%20name/follow_requests
 ```
 ---
 # Yet to be augmented API
-As per linked doc: 
+As per linked doc: [lightskyblue/socialdistribution/views/html_views.py](lightskyblue/socialdistribution/views/html_views.py)  
 ```
 Endpoints:
 -------------------------------------------------
