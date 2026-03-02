@@ -72,7 +72,7 @@ GET /authors/author%20name
   "web": "https://example.com/authors/author%20name"
 }
 ```
-
+---
 Endpoint: `PUT /author/{AUTHOR_SERIAL}`
 Requires Authentication?: Yes
 
