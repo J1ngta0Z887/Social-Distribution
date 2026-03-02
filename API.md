@@ -190,3 +190,47 @@ GET /author/john%20doe/followers
 }
 ```
 ---
+### Get Author Follow Requests
+Endpoint: `/authors/{AUTHOR_SERIAL}/follow_requests`
+Requires Authentication?: Yes
+
+**Example Request:**
+```http
+GET /authors/1/follow_requests
+OR
+GET /author/author%20name/followers
+```
+
+**Example Response:**
+```json
+{
+  "type": "requests",
+  "requests": [
+    {
+      "type": "follow",
+      "summary": "authors name wants to follow john doe",
+      "actor": {
+        "type": "author",
+        "id": "https://example.com/authors/1",
+        "host": "https://example.com/api",
+        "displayName": "authors name",
+        "bio": "authors detailed bio",
+        "github": "https://github.com/authorname",
+        "profileImage": "https://example.com/images/john.jpg",
+        "web": "https://example.com/authors/author%20name"
+      },
+      "object": {
+        "type": "author",
+        "id": "https://example.com/authors/3",
+        "host": "https://example.com/api",
+        "displayName": "john doe",
+        "bio": "beautiful weather today, huh?",
+        "github": "https://github.com/johndoe",
+        "profileImage": "https://example.com/images/johnscat.jpg",
+        "web": "https://example.com/authors/john%20doe"
+      }
+    }
+  ]
+}
+```
+---
