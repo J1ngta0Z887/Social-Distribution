@@ -141,21 +141,8 @@ class AuthorAPITest(TestCase):
         self.assertEqual(payload["authors"], [])
 
     def test_follow_request_api(self):
-        # first we test usage with follows pending
-        other_user = self.user_model.objects.create_user(
-            username="follower",
-            password="passpass",
-        )
-        other_author = Author.objects.create(
-            user=other_user,
-            display_name="Follower",
-            host="http://testserver",
-        )
-        self.addCleanup(other_author.delete)
-        self.addCleanup(other_user.delete)
-
         follow_request = FollowRequest.objects.create(
-            from_author=other_author,
+            from_author=self.other_author,
             to_author=self.author,
         )
         self.addCleanup(follow_request.delete)
@@ -169,13 +156,12 @@ class AuthorAPITest(TestCase):
 
         request_payload = payload["requests"][0]
         self.assertEqual(request_payload["type"], "follow")
-        self.assertEqual(request_payload["actor"]["id"], f"http://testserver/api/authors/{other_author.id}")
+        self.assertEqual(request_payload["actor"]["id"], f"http://testserver/api/authors/{self.other_author.id}")
         self.assertEqual(request_payload["object"]["id"], f"http://testserver/api/authors/{self.author.id}")
         self.assertIn("wants to follow", request_payload["summary"])
 
-        # now we test usage with a user trying to read another users follows
         self.client.logout()
-        self.client.force_login(other_user)
+        self.client.force_login(self.other_user)
 
         response = self.client.get(f"/api/authors/{self.author.id}/follow_requests")
         self.assertEqual(response.status_code, 403)
@@ -184,71 +170,24 @@ class AuthorAPITest(TestCase):
         self.client.force_login(self.user)
 
     def test_following_return_valid(self):
-        target_user = self.user_model.objects.create_user(
-            username="target",
-            password="targetpass",
-        )
-        target_author = Author.objects.create(
-            user=target_user,
-            display_name="Target",
-            host="http://testserver",
-        )
-        self.addCleanup(target_author.delete)
-        self.addCleanup(target_user.delete)
+        self.author.following.add(self.other_author)
 
-        self.author.following.add(target_author)
-
-        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{self.other_author.id}")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["id"], f"http://testserver/api/authors/{target_author.id}")
+        self.assertEqual(payload["id"], f"http://testserver/api/authors/{self.other_author.id}")
 
     def test_following_per_user_returns_404_if_not_following(self):
-        target_user = self.user_model.objects.create_user(
-            username="target2",
-            password="targetpass2",
-        )
-        target_author = Author.objects.create(
-            user=target_user,
-            display_name="Target2",
-            host="http://testserver",
-        )
-        self.addCleanup(target_author.delete)
-        self.addCleanup(target_user.delete)
+        self.author.following.remove(self.other_author)
 
-        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{self.other_author.id}")
         self.assertEqual(response.status_code, 404)
 
     def test_following_per_user_forbidden_if_not_owner(self):
-        target_user = self.user_model.objects.create_user(
-            username="target3",
-            password="targetpass3",
-        )
-        target_author = Author.objects.create(
-            user=target_user,
-            display_name="Target3",
-            host="http://testserver",
-        )
-        self.addCleanup(target_author.delete)
-        self.addCleanup(target_user.delete)
-
-        self.author.following.add(target_author)
-        another_user = self.user_model.objects.create_user(
-            username="impersonator",
-            password="impersonate",
-        )
-        another_author = Author.objects.create(
-            user=another_user,
-            display_name="Imposter",
-            host="http://testserver",
-        )
-        self.addCleanup(another_author.delete)
-        self.addCleanup(another_user.delete)
-
         self.client.logout()
-        self.client.force_login(another_user)
+        self.client.force_login(self.other_user)
 
-        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{self.other_author.id}")
         self.assertEqual(response.status_code, 403)
 
         self.client.logout()
