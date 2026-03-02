@@ -60,7 +60,6 @@ GET /authors/author%20name
 
 **Example Response:**
 ```json
-
 {
   "type": "author",
   "id": "https://example.com/authors/1",
@@ -119,7 +118,6 @@ GET /author/author%20name/following
 
 **Example Response:**
 ```json
-
 {
   "type": "following",
   "authors": [
@@ -137,6 +135,31 @@ GET /author/author%20name/following
 }
 ```
 ---
+### Get User Information of Someone Author is Following
+Endpoint: `GET /author/{AUTHOR_SERIAL}/following/{FOREIGN_AUTHOR_FQID}`
+Requires Authentication?: Yes
+
+**Example Request:**
+```http
+GET /author/1/following/3
+OR
+GET /author/author%20name/following/john%20doe
+```
+
+**Example Response:**
+```json
+{
+  "type": "author",
+  "id": "https://example.com/authors/3",
+  "host": "https://example.com/api",
+  "displayName": "john doe",
+  "bio": "beautiful weather today, huh?",
+  "github": "https://github.com/johndoe",
+  "profileImage": "https://example.com/images/johnscat.jpg",
+  "web": "https://example.com/authors/john%20doe"
+}
+```
+---
 ### Get Who's Following Author
 Endpoint: `GET /author/{AUTHOR_SERIAL}/followers`
 Requires Authentication?: No
@@ -150,7 +173,6 @@ GET /author/john%20doe/followers
 
 **Example Response:**
 ```json
-
 {
   "type": "followers",
   "authors": [
