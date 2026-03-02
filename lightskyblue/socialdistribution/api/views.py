@@ -33,7 +33,6 @@ def user_is_author(user, author: Author) -> bool:
 # it's very multi-faceted, taking on roles from other apis as per spec
 class AuthorInboxAPI(View):
 
-
     # as of now, there's no "inbox" in a practical sense; all valid data
     # sent here is automatically applied, assuming its valid
     def put(self):
