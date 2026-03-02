@@ -7,6 +7,7 @@ from ..models import Author, FollowRequest
 # note: test cases were generated with codex and then checked
 # by Chris; if there's some weird issue, please let me know
 class AuthorAPITest(TestCase):
+    user_model = get_user_model()
     new_payload = {
         "displayName": "New Author",
         "bio": "A new author.",
@@ -14,9 +15,9 @@ class AuthorAPITest(TestCase):
         "profileImage": "http://example.com/new.jpg",
     }
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="a",
-            password="aaaabbbb",
+        self.user = self.user_model.objects.create_user(
+            username="user",
+            password="secretpassword",
         )
         self.author = Author.objects.create(
             user=self.user,
@@ -28,9 +29,24 @@ class AuthorAPITest(TestCase):
         )
         self.client.force_login(self.user)
 
+        self.other_user = self.user_model.objects.create_user(
+            username="user2",
+            password="secretpassword2",
+        )
+        self.other_author = Author.objects.create(
+            user=self.other_user,
+            display_name="Author Two",
+            host="http://testserver",
+            bio="A second test author.",
+            github_url="https://github.com/example",
+            picture_url="http://example.com/pic.jpg"
+        )
+
     def tearDown(self):
         self.author.delete()
         self.user.delete()
+        self.other_author.delete()
+        self.other_user.delete()
 
     def test_get_author_returns_serialized_payload(self):
         response = self.client.get(f"/api/authors/{self.author.id}")
@@ -45,7 +61,7 @@ class AuthorAPITest(TestCase):
         self.assertEqual(payload["id"], f"http://testserver/api/authors/{self.author.id}")
 
     def test_missing_author_returns_empty_object(self):
-        response = self.client.get("/api/authors/999999")
+        response = self.client.get("/api/authors/9999")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {})
 
@@ -86,7 +102,7 @@ class AuthorAPITest(TestCase):
         total_authors = 5
         other_authors = []
         for i in range(total_authors):
-            other_user = get_user_model().objects.create_user(
+            other_user = self.user_model.objects.create_user(
                 username=f"b{i}",
                 password=f"bbbbcccc{i}",
             )
@@ -126,7 +142,7 @@ class AuthorAPITest(TestCase):
 
     def test_follow_request_api(self):
         # first we test usage with follows pending
-        other_user = get_user_model().objects.create_user(
+        other_user = self.user_model.objects.create_user(
             username="follower",
             password="passpass",
         )
@@ -162,6 +178,77 @@ class AuthorAPITest(TestCase):
         self.client.force_login(other_user)
 
         response = self.client.get(f"/api/authors/{self.author.id}/follow_requests")
+        self.assertEqual(response.status_code, 403)
+
+        self.client.logout()
+        self.client.force_login(self.user)
+
+    def test_following_return_valid(self):
+        target_user = self.user_model.objects.create_user(
+            username="target",
+            password="targetpass",
+        )
+        target_author = Author.objects.create(
+            user=target_user,
+            display_name="Target",
+            host="http://testserver",
+        )
+        self.addCleanup(target_author.delete)
+        self.addCleanup(target_user.delete)
+
+        self.author.following.add(target_author)
+
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["id"], f"http://testserver/api/authors/{target_author.id}")
+
+    def test_following_per_user_returns_404_if_not_following(self):
+        target_user = self.user_model.objects.create_user(
+            username="target2",
+            password="targetpass2",
+        )
+        target_author = Author.objects.create(
+            user=target_user,
+            display_name="Target2",
+            host="http://testserver",
+        )
+        self.addCleanup(target_author.delete)
+        self.addCleanup(target_user.delete)
+
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
+        self.assertEqual(response.status_code, 404)
+
+    def test_following_per_user_forbidden_if_not_owner(self):
+        target_user = self.user_model.objects.create_user(
+            username="target3",
+            password="targetpass3",
+        )
+        target_author = Author.objects.create(
+            user=target_user,
+            display_name="Target3",
+            host="http://testserver",
+        )
+        self.addCleanup(target_author.delete)
+        self.addCleanup(target_user.delete)
+
+        self.author.following.add(target_author)
+        another_user = self.user_model.objects.create_user(
+            username="impersonator",
+            password="impersonate",
+        )
+        another_author = Author.objects.create(
+            user=another_user,
+            display_name="Imposter",
+            host="http://testserver",
+        )
+        self.addCleanup(another_author.delete)
+        self.addCleanup(another_user.delete)
+
+        self.client.logout()
+        self.client.force_login(another_user)
+
+        response = self.client.get(f"/api/authors/{self.author.id}/following/{target_author.id}")
         self.assertEqual(response.status_code, 403)
 
         self.client.logout()

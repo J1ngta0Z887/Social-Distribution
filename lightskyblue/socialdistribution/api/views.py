@@ -27,6 +27,19 @@ def get_author_model_from_id(author_id: int | str) -> Author | None:
 def user_is_author(user, author: Author) -> bool:
     return user.id == author.id
 
+
+# per https://uofa-cmput404.github.io/general/project.html#inbox-api
+# likely the most important api of our project (thus why its at the top).
+# it's very multi-faceted, taking on roles from other apis as per spec
+class AuthorInboxAPI(View):
+
+
+    # as of now, there's no "inbox" in a practical sense; all valid data
+    # sent here is automatically applied, assuming its valid
+    def put(self):
+        pass
+
+
 # per https://uofa-cmput404.github.io/general/project.html#authors-api
 class AuthorsAPI(View):
 
@@ -121,7 +134,22 @@ class AuthorFollowingsAPI(View):
 # TODO: implement
 class AuthorFollowingPerUserAPI(View):
 
-    pass
+    def _pull(self, author_id: int | str) -> Author | None:
+        return get_author_model_from_id(author_id)
+
+    def get(self, req: HTTPResponse, author_id: any, target_author_id: any):
+        author = self._pull(author_id)
+        target_author = self._pull(target_author_id)
+
+        if not author or not target_author:
+            return JsonResponse({}, status=404)
+        if not user_is_author(req.user, author):
+            return JsonResponse({}, status=403)
+
+        if not author.is_following(target_author):
+            return JsonResponse({}, status=404)
+
+        return JsonResponse(target_author.serialize(), safe=True)
 
 
 
