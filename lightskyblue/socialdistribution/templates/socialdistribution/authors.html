@@ -1,3 +1,4 @@
+{% extends "base.html" %}
 {% comment %}
 Template: Local Authors list + follow/unfollow controls
 
@@ -16,8 +17,8 @@ Routes expected:
 - unfollow_local_author (POST, takes author id)
 {% endcomment %}
 
-{% extends "base.html" %}
 {% load static %}
+{% load social_extras %}
 
 {# Page-specific stylesheet. Loaded via Django's staticfiles system. #}
 {% block extra_css %}
@@ -47,15 +48,17 @@ Routes expected:
       {% if a.id != my_author.id %}
 
         {# If already following, show "Unfollow"; otherwise show "Follow" #}
-        {% if a in my_author.following.all %}
-          <form method="post" action="{% url 'unfollow_local_author' a.id %}">
+        {% if my_author|is_following:a %}
+          <form method="post" action="{% url 'unfollow_local_author' a.id %}" style="display:inline; margin:0;">
             {% csrf_token %}
-            <button type="submit">Unfollow</button>
+            <button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">Unfollow</button>
           </form>
+        {% elif my_author|has_pending_follow_request:a %}
+          <span style="color:#6c757d;">request pending</span>
         {% else %}
-          <form method="post" action="{% url 'follow_local_author' a.id %}">
+          <form method="post" action="{% url 'follow_local_author' a.id %}" style="display:inline; margin:0;">
             {% csrf_token %}
-            <button type="submit">Follow</button>
+            <button type="submit" style="background:none; border:none; color:#000000; text-decoration:underline; cursor:pointer; padding:0; font:inherit;">Follow</button>
           </form>
         {% endif %}
       {% endif %}

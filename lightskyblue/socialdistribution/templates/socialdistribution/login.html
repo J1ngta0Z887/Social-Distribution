@@ -2,6 +2,13 @@
 
 {% block title %}Login | lightskyblue{% endblock %}
 
+<!--
+  Description: Login page for existing users. Renders a username/password form and redirects to the user's feed on success. Links to the signup page
+  for users without an account.
+
+  Context variables expected:
+  - form (Form): A Django AuthenticationForm instance. 
+-->
 {% block content %}
   <div class="card">
     <h1 class="title">Login</h1>
@@ -9,8 +16,14 @@
 
     <form method="post" class="form">
       {% csrf_token %}
+      <!-- Renders all form fields (username, password) and any validation errors as <p> tags -->
       {{ form.as_p }}
       <button class="btn" type="submit">Login</button>
     </form>
+
+    <!-- Fallback link for users who do not yet have an account -->
+    <p style="margin-top: 20px; text-align: center;">
+      Don't have an account? <a href="{% url 'signup' %}" style="color: #0d6efd; text-decoration: none;">Sign up</a>
+    </p>
   </div>
 {% endblock %}

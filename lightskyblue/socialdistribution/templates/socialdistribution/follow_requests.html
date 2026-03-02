@@ -2,19 +2,37 @@
 
 {% block title %}Follow Requests | lightskyblue{% endblock %}
 
+<!--
+  Description: Displays all pending follow requests received by the current user. Each request shows the requester's username and
+  Accept/Reject action buttons that POST to the follow request handler.
+
+  Context variables expected:
+  - follow_requests (QuerySet): Collection of FollowRequest objects where the current
+    user is the recipient. Each object exposes:
+      - fr.id (int): Used to resolve the 'handle_follow_request' URL.
+      - fr.from_author.user.username (str): The requesting user's username, used for
+        display and linking to their public profile.
+-->
 {% block content %}
   <div class="card">
     <h1 class="title">Follow Requests</h1>
 
+    <!-- Render the list only if there are pending requests; otherwise show empty state -->
     {% if follow_requests %}
       <ul>
         {% for fr in follow_requests %}
           <li>
+            <!-- Link to the requester's public profile page -->
             <a href="{% url 'public_author_profile' fr.from_author.user.username %}">
               {{ fr.from_author.user.username }}
             </a>
             wants to follow you.
-            <form method="post" action="{% url 'handle_follow_request' fr.id %}" >
+
+            <!-- 
+              Inline form per request. POSTs to handle_follow_request with the request's id.
+              The 'action' button value ('accept' or 'reject') tells the view how to handle it.
+            -->
+            <form method="post" action="{% url 'handle_follow_request' fr.id %}">
               {% csrf_token %}
               <button name="action" value="accept" class="btn-primary">Accept</button>
               <button name="action" value="reject" class="btn-outline">Reject</button>
@@ -23,6 +41,7 @@
         {% endfor %}
       </ul>
     {% else %}
+      <!-- Empty state: shown when the current user has no pending follow requests -->
       <p>No follow requests at the moment.</p>
     {% endif %}
   </div>

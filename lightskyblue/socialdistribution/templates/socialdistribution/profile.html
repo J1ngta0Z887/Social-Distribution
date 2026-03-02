@@ -8,8 +8,25 @@
 
 {% block title %}{{ author.display_name|default:profile_user.username }} | Profile{% endblock %}
 
+<!--
+  Description: Author profile page. Displays the author's avatar, display name, username, bio, GitHub link, and follower/following/friends counts (each linking
+  to their respective list pages). Also lists the author's PUBLIC entries, with Edit and Delete actions shown only to the profile owner.
+
+  Context variables expected:
+  - profile_user (User): The Django User object for the profile being viewed. Used to
+    check ownership (request.user == profile_user) and display the @username handle.
+  - author (Author): The Author object linked to profile_user. 
+  - followers_count (int): Total number of users following this author.
+  - following_count (int): Total number of users this author is following.
+  - friends_count (int): Total number of mutual follows (friends) for this author.
+  - entries (QuerySet): Entries belonging to this author, to be listed on their profile.
+  - request.path (str): Passed as a hidden 'next' field in the delete form so the
+    view can redirect back to this page after deletion.
+-->
 {% block content %}
   <div class="card profile-card">
+
+    <!-- Edit Profile button: only visible to the authenticated profile owner -->
     {% if request.user.is_authenticated and request.user == profile_user %}
       <div class="actions">
         <a class="btn-outline" href="{% url 'edit_profile' %}">Edit Profile</a>
@@ -17,6 +34,8 @@
     {% endif %}
 
     <div class="profile-layout">
+
+      <!-- Avatar: falls back to the default avatar image if no picture_url is set -->
       <div class="profile-avatar">
         {% if author.picture_url %}
           <img src="{{ author.picture_url }}" alt="Profile Picture">
@@ -26,13 +45,18 @@
       </div>
 
       <div class="profile-info">
+        <!-- Display name falls back to username if author.display_name is not set -->
         <h1 class="title">{{ author.display_name|default:profile_user.username }}</h1>
         <p class="subtitle">@{{ profile_user.username }}</p>
+
+        <!-- GitHub link: only rendered if the author has provided a GitHub URL -->
         <div class="links">
           {% if author.github_url %}
             <a class="btn-outline" href="{{ author.github_url }}" target="_blank" rel="noopener">GitHub</a>
           {% endif %}
         </div>
+
+        <!-- Bio: displays a muted placeholder if the author has not written one -->
         {% if author.bio %}
           <p class="bio">{{ author.bio }}</p>
         {% else %}
@@ -41,28 +65,43 @@
       </div>
     </div>
 
-    <div class = "Followers" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    <!-- Follower/following/friends counts, each linking to their respective list pages -->
+    <div class="Followers" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
       <a href="{% url 'author_followers' author.id %}">Followers: {{ followers_count }}</a>
     </div>
-    <div class = "Following" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    <div class="Following" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
       <a href="{% url 'author_following' author.id %}">Following: {{ following_count }}</a>
     </div>
-    <div class = "Friendss" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    <div class="Friendss" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
       <a href="{% url 'author_friends' author.id %}">Friends: {{ friends_count }}</a>
     </div>
+
+    <!-- Entry list for this author's profile -->
     <div class="profile-entries" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
       <h2>Entries</h2>
       {% if entries %}
         {% for entry in entries %}
           <div class="card" style="margin:12px 0;">
+
+            <!-- Title: only rendered if the entry has one -->
             {% if entry.title %}<h3 style="margin:0 0 6px 0;">{{ entry.title }}</h3>{% endif %}
+
+            <!-- Content: passed through the |render_entry filter to handle markdown or rich text -->
             {% if entry.content %}
               <div style="margin:0 0 10px 0;">{{ entry|render_entry }}</div>
             {% endif %}
+
+            <!-- Image: only rendered if a URL is provided -->
             {% if entry.image_url %}
               <img src="{{ entry.image_url }}" alt="entry image" style="max-width:100%; border-radius:10px;">
             {% endif %}
+
             <p class="subtitle" style="margin-top:10px;">{{ entry.created_at }}</p>
+
+            <!--
+              Edit and Delete controls: only shown to the profile owner.
+              The hidden 'next' field on the delete form redirects back to this page after deletion.
+            -->
             {% if entry.author.user == request.user %}
               <div style="margin-top: 10px;">
                 <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
@@ -76,6 +115,7 @@
           </div>
         {% endfor %}
       {% else %}
+        <!-- Empty state: shown when the author has not created any entries yet -->
         <p class="subtitle">No entries yet.</p>
       {% endif %}
     </div>

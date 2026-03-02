@@ -73,11 +73,12 @@ Note:
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login
+from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Q
 from ..utils import new_events
 from ..models import Author, Entry, Comment, FollowRequest
-from ..forms import AuthorForm, EntryForm, CommentForm
+from ..forms import AuthorForm, EntryForm, CommentForm, SignupForm
 from django.views.decorators.http import require_POST, require_GET
 
 
@@ -482,3 +483,69 @@ def view_entry(request, entry_id):
         "entry": entry,
         "my_author": me,
     })
+
+def signup(request):
+    if request.method == "POST":
+        step = request.POST.get("step", "1")
+        
+        if step == "1":
+            # First step: validate username and passwords
+            form = SignupForm(request.POST)
+            
+            # Validate the form first
+            if form.is_valid():
+                # Step 1 valid, show step 2
+                return render(request, "socialdistribution/signup.html", {
+                    "form": form,
+                    "step": 2,
+                    "username": form.cleaned_data.get('username'),
+                    "password1": form.cleaned_data.get('password1'),
+                })
+            
+            return render(request, "socialdistribution/signup.html", {"form": form, "step": 1})
+        
+        elif step == "2":
+            # Second step: validate profile info and create user + author
+            username = request.POST.get('hidden_username')
+            password = request.POST.get('hidden_password')
+            display_name = request.POST.get('display_name', '').strip()
+            bio = request.POST.get('bio', '')
+            picture_url = request.POST.get('picture_url', '')
+            github_url = request.POST.get('github_url', '')
+            
+            # Use username as display_name if not provided
+            if not display_name:
+                display_name = username
+            
+            # Reconstruct form data for validation
+            form_data = {
+                'username': username,
+                'password1': password,
+                'password2': password,
+                'display_name': display_name,
+                'bio': bio,
+                'picture_url': picture_url,
+                'github_url': github_url,
+            }
+            form = SignupForm(form_data)
+            
+            if form.is_valid():
+                user = form.save()
+                # Auto-login
+                user = authenticate(username=username, password=password)
+                login(request, user)
+                return redirect("home")
+            else:
+                # Validation failed, show step 2 again with errors
+                return render(request, "socialdistribution/signup.html", {
+                    "form": form,
+                    "step": 2,
+                    "username": username,
+                    "password1": password,
+                })
+    
+    else:
+        # from ..forms import SignupForm  ← remove this line
+        form = SignupForm()
+    
+    return render(request, "socialdistribution/signup.html", {"form": form, "step": 1})

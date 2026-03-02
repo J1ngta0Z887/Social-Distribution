@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | lightskyblue{% endblock %}
+
+<!--
+    Description: Two-step signup flow for creating new user accounts.
+
+    Context variables expected:
+    - step (int): Current step number, either 1 or 2.
+    - form (Form): The Django form instance for the current step.
+    - username (str): Passed into Step 2 context for display and hidden field.
+    - password1 (str): Passed into Step 2 context for the hidden field carry-forward.
+-->
+
+{% block content %}
+  <div class="card" style="max-width: 500px; margin: 30px auto;">
+    <h1 class="title">Create Account</h1>
+    
+    <!--     
+    Step 1 - Collects username and password using Django's UserCreationForm. Validation (duplicate usernames, password strength, 
+    password match) is handled automatically by the form. 
+    -->
+    {% if step == 1 %}
+      <p class="subtitle">Step 1 of 2 - Choose your credentials</p>
+
+      <!-- Top-level error (e.g., server-side issues not tied to a specific field) -->
+      {% if error %}
+        <div style="color: #dc3545; margin-bottom: 15px; padding: 10px; background: #f8d7da; border-radius: 5px;">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="post" class="form" style="margin-top: 20px;">
+        {% csrf_token %}
+        <input type="hidden" name="step" value="1">
+        
+        <!-- Non-field errors (e.g., form-level validation failures) -->
+        {% if form.non_field_errors %}
+          <div style="color: #dc3545; margin-bottom: 15px;">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Username field. Validation is handled by UserCreationForm. -->
+        <div style="margin-bottom: 15px;">
+          <label for="{{ form.username.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.username.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="{{ form.password1.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.password1.errors %}{{ error }}<br>{% endfor %}
+            </div>
+          {% endif %}
+          <div style="font-size: 0.85em; color: #666; margin-top: 5px;">
+            {{ form.password1.help_text|safe }}
+          </div>
+        </div>
+
+        <!-- Confirm password field. Match validation (password1 == password2) is handled by UserCreationForm. -->
+        <div style="margin-bottom: 20px;">
+          <label for="{{ form.password2.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Confirm Password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.password2.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <button class="btn-primary" type="submit" style="width: 100%; padding: 10px; background-color: #0d6efd; border: none; cursor: pointer; font-weight: 500;">
+          Continue to Profile Setup
+        </button>
+      </form>
+    
+    <!-- 
+    Step 2 - Collects optional Author profile fields (display_name, bio, picture_url, github_url). Username and password from Step 1 are carried 
+    forward as hidden fields and used to create the User and Author objects together on final submission.
+    -->
+    {% elif step == 2 %}
+      <p class="subtitle">Step 2 of 2 - Complete your profile</p>
+
+      <form method="post" class="form" style="margin-top: 20px;">
+        {% csrf_token %}
+        <input type="hidden" name="step" value="2">
+
+        <!-- Carry-forward fields from Step 1 since Django does not use sessions between steps.-->
+        <input type="hidden" name="hidden_username" value="{{ username }}">
+        <input type="hidden" name="hidden_password" value="{{ password1 }}">
+
+        <!-- Non-field errors (e.g., if final account creation fails) -->
+        {% if form.non_field_errors %}
+          <div style="color: #dc3545; margin-bottom: 15px; padding: 10px; background: #f8d7da; border-radius: 5px;">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Confirms to the user which account they are creating -->
+        <div style="background: #f0f8ff; padding: 12px; border-radius: 5px; margin-bottom: 20px; font-size: 0.9em;">
+          <strong>Username:</strong> {{ username }}
+        </div>
+
+        <!-- Display name: shown publicly in place of the username where supported -->
+        <div style="margin-bottom: 15px;">
+          <label for="{{ form.display_name.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Display Name <span style="color: #999;">(optional)</span></label>
+          {{ form.display_name }}
+          {% if form.display_name.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.display_name.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Bio: short freeform text shown on the user's public Author profile -->
+        <div style="margin-bottom: 15px;">
+          <label for="{{ form.bio.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Bio <span style="color: #999;">(optional)</span></label>
+          {{ form.bio }}
+          {% if form.bio.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.bio.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Profile picture: expects a publicly accessible image URL. URL format validation is handled by the AuthorProfileForm. -->
+        <div style="margin-bottom: 15px;">
+          <label for="{{ form.picture_url.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">Profile Picture URL <span style="color: #999;">(optional)</span></label>
+          {{ form.picture_url }}
+          {% if form.picture_url.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.picture_url.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+    
+        <!-- GitHub URL: used to pull in the user's public GitHub activity for their feed. URL format validation is handled by the AuthorProfileForm. -->
+        <div style="margin-bottom: 20px;">
+          <label for="{{ form.github_url.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: 500;">GitHub Profile <span style="color: #999;">(optional)</span></label>
+          {{ form.github_url }}
+          {% if form.github_url.errors %}
+            <div style="color: #dc3545; font-size: 0.9em; margin-top: 5px;">
+              {% for error in form.github_url.errors %}{{ error }}<br>{% endfor %}
+            </div>
+          {% endif %}
+          <div style="font-size: 0.85em; color: #666; margin-top: 5px;">We'll automatically add your GitHub activity to your feed</div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" onclick="window.location.reload();" class="btn-primary" style="flex: 1; padding: 10px; background-color: #6c757d; border: none; cursor: pointer; font-weight: 500;">
+            Back
+          </button>
+          <button type="submit" class="btn-primary" style="flex: 1; padding: 10px; background-color: #0d6efd; border: none; cursor: pointer; font-weight: 500;">
+            Create Account
+          </button>
+        </div>
+      </form>
+
+    {% endif %}
+
+    <p style="margin-top: 20px; text-align: center; color: #666;">
+      Already have an account? <a href="{% url 'login' %}" style="color: #0d6efd; text-decoration: none;">Log in</a>
+    </p>
+  </div>
+{% endblock %}

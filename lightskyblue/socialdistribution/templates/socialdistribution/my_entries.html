@@ -3,10 +3,21 @@
 
 {% block title %}My Entries{% endblock %}
 
+<!--
+  Description: Lists all entries created by the current user, ordered by created_at. Each entry displays its title, rendered content, image, and timestamp, along with
+  Edit and Delete actions. 
+
+  Context variables expected:
+  - entries (QuerySet): All Entry objects belonging to the current user, ordered
+    by created_at. Each object exposes:
+  - request.path (str): Passed as a hidden 'next' field in the delete form so the
+    view can redirect back to this page after deletion.
+-->
 {% block content %}
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
       <h1 class="title" style="margin:0;">My Entries</h1>
+      <!-- Shortcut to the entry creation page -->
       <a class="btn-primary" href="{% url 'create_entry' %}">+ Create Entry</a>
     </div>
 
@@ -14,12 +25,16 @@
       <div style="margin-top:16px;">
         {% for e in entries %}
           <div class="card" style="margin:12px 0;">
+
+            <!-- Title: only rendered if the entry has one -->
             {% if e.title %}<h3 style="margin:0 0 6px 0;">{{ e.title }}</h3>{% endif %}
 
+            <!-- Content: passed through the |render_entry filter to handle markdown or rich text -->
             {% if e.content %}
               <div style="margin:0 0 10px 0;">{{ e|render_entry }}</div>
             {% endif %}
 
+            <!-- Image: only rendered if a URL is provided -->
             {% if e.image_url %}
               <img src="{{ e.image_url }}" alt="entry image"
                    style="max-width:100%; border-radius:10px;">
@@ -28,7 +43,13 @@
             <p class="subtitle" style="margin-top:10px;">{{ e.created_at }}</p>
 
             <div style="margin-top: 10px;">
+              <!-- Edit: navigates to the entry edit page -->
               <a href="{% url 'edit_entry' e.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
+
+              <!-- 
+                Delete: POSTs to delete_entry with the entry id. The hidden 'next' field
+                tells the view to redirect back to this page after deletion.
+              -->
               <form method="post" action="{% url 'delete_entry' e.id %}" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.path }}">
@@ -39,6 +60,7 @@
         {% endfor %}
       </div>
     {% else %}
+      <!-- Empty state: shown when the user has not created any entries yet -->
       <p class="subtitle" style="margin-top:12px;">No entries yet.</p>
     {% endif %}
   </div>

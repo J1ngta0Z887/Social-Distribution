@@ -1,37 +1,61 @@
 {% extends "base.html" %}
 {% load social_extras %}
+
 {% block title %}{{ entry.title|default:"Entry" }}{% endblock %}
 
+<!--
+  Description: Detail view for a single entry. Displays the entry's author, timestamps, title, content, and image, along with Like/Unlike, Edit, and Delete actions. Below the
+  entry, lists all comments with per-comment Like/Unlike buttons, and provides a form for the current user to leave a new comment.
+
+  Context variables expected:
+  - entry (Entry): The Entry object being viewed. Exposes:
+  - my_author (Author): The Author object for the currently logged-in user. Used to
+    determine Like/Unlike state on both the entry and individual comments.
+  - request.path (str): Passed as a hidden 'next' field in all POST forms so each view
+    can redirect back to this page after the action completes.
+-->
 {% block content %}
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <!-- Back link: returns the user to the main feed -->
       <a href="{% url 'home' %}" style="text-decoration: none; color: #0d6efd; cursor: pointer;">← Back to Feed</a>
     </div>
 
     <div class="card" style="margin:0;">
+
+      <!-- Author name (linked to their public profile) and timestamps -->
       <p style="margin:0 0 6px 0;">
         <strong>
           <a href="{% url 'public_author_profile' entry.author.user.username %}">
             {{ entry.author.user.username }}
           </a>
         </strong>
+        <!-- updated_at is only shown if the entry has been edited after creation -->
         <span class="subtitle"> · {{ entry.created_at }}{% if entry.updated_at %} (edited {{ entry.updated_at }}){% endif %}</span>
       </p>
 
+      <!-- Title: only rendered if the entry has one -->
       {% if entry.title %}
         <h1 style="margin:12px 0 6px 0;">{{ entry.title }}</h1>
       {% endif %}
 
+      <!-- Content: passed through the |render_entry filter to handle markdown or rich text -->
       {% if entry.content %}
         <div style="margin:0 0 10px 0; font-size: 16px; line-height: 1.6;">{{ entry|render_entry }}</div>
       {% endif %}
 
+      <!-- Image: only rendered if a URL is provided -->
       {% if entry.image_url %}
         <img src="{{ entry.image_url }}" alt="entry image"
              style="max-width:100%; border-radius:10px; margin:15px 0;">
       {% endif %}
 
       <div style="margin-top:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+
+        <!--
+          Like/Unlike toggle for the entry. Button label and count reflect the current
+          like state. The hidden 'next' field redirects back to this page after the POST.
+        -->
         <form method="post" action="{% url 'toggle_entry_like' entry.id %}" style="display:inline;">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.path }}">
@@ -41,6 +65,7 @@
           </button>
         </form>
 
+        <!-- Edit and Delete controls: only shown to the entry's author -->
         {% if entry.author.user == request.user %}
           <a href="{% url 'edit_entry' entry.id %}" class="btn-primary" style="background-color: #6c757d; text-decoration: none;">Edit</a>
 
@@ -56,6 +81,7 @@
 
       <hr style="margin:15px 0;">
 
+      <!-- Comments section -->
       <div style="margin-top:15px;">
         <h3 style="margin:0 0 12px 0;">Comments ({{ entry.comments.count }})</h3>
 
@@ -63,6 +89,8 @@
           <div style="padding:10px 12px; border-radius:10px; background:#f7f7f7; margin-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
               <div style="flex: 1;">
+
+                <!-- Comment author name (linked to their public profile) and timestamp -->
                 <strong>
                   <a href="{% url 'public_author_profile' c.author.user.username %}" style="text-decoration: none; color: inherit;">
                     {{ c.author.user.username }}
@@ -72,6 +100,10 @@
                 <div style="margin-top:6px;">{{ c.content }}</div>
               </div>
 
+              <!--
+                Like/Unlike toggle for each individual comment. Button label and count
+                reflect the current like state for that comment.
+              -->
               <form method="post" action="{% url 'toggle_comment_like' c.id %}" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.path }}">
@@ -83,11 +115,14 @@
               </form>
             </div>
           </div>
+
+        <!-- Empty state: shown when the entry has no comments yet -->
         {% empty %}
           <p class="subtitle" style="margin:0 0 15px 0;">No comments yet. Be the first to comment!</p>
         {% endfor %}
       </div>
 
+      <!-- Add comment form: POSTs to add_comment with the entry id -->
       <div style="margin-top:20px;">
         <h4 style="margin:0 0 12px 0;">Leave a Comment</h4>
         <form method="post" action="{% url 'add_comment' entry.id %}">

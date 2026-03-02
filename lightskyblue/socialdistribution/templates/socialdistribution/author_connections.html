@@ -1,3 +1,4 @@
+{% extends "base.html" %}
 {% comment %}
 Template: connection list page (followers / following / friends, etc.)
 
@@ -10,8 +11,6 @@ Context expected:
 - connections: Iterable of connection objects where each has `user.username`
 {% endcomment %}
 
-{% extends "base.html" %}
-
 {# Page title shown in the browser tab #}
 {% block title %}{{ connection_type }} | lightskyblue{% endblock %}
 
@@ -22,7 +21,9 @@ Context expected:
     <ul>
       {# Each `connection` is expected to expose `connection.user.username` #}
       {% for connection in connections %}
-        <li>{{ connection.user.username }}</li>
+        <li>
+        <a href ="{% url 'public_author_profile' connection.user.username %}"> {{ connection.user.username }} </a>
+      </li>
     {% endfor %}
     </ul>
   </div>
