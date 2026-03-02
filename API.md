@@ -1,12 +1,12 @@
 # API Documentation
 
-## Overview
-
 Base URL: `/api`  
 API Format:  `json`
 Authentication: Django user based.
----
-
+Some application functionality has not yet
+been augmented as an API, instead acting as a
+html view route. This will be changed by part 2
+submission.
 
 
 ### List All Authors
