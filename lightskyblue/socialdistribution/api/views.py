@@ -1,5 +1,6 @@
 import json
 from functools import wraps
+from json.decoder import JSONDecodeError
 from urllib.request import Request
 
 from django.contrib.auth.models import User
@@ -111,11 +112,12 @@ REGION https://uofa-cmput404.github.io/general/project.html#single-author-api
 
 
 class api_authors_の(View):
-    def _pull(self, author_id: str):
+    def _pull(self, author_id: str) -> Author | None:
         return get_author_model_from_id(author_id)
 
-    def _push():
-        pass
+    def _push(self, author: Author, new_values: dict):
+        # update profile only selectively updates based on available keys
+        author.update_profile(new_values)
 
     def get(self, req: HttpRequest, author_id: str):
         author = self._pull(author_id)
@@ -123,6 +125,19 @@ class api_authors_の(View):
         if author is None:
             return JsonResponse({}, status=404)
         return JsonResponse(author.serialize(), status=200)
+
+    @user_must_be_author("author_id")
+    def put(self, req: HttpRequest, author_id: str):
+        author = self._pull(author_id)
+        if not author:
+            return JsonResponse({}, status=404)
+        try:
+            payload = json.loads(req.body.decode("utf-8")) if req.body else {}
+        except JSONDecodeError:
+            payload = {}
+
+        self._push(author, payload)
+        return JsonResponse(author.serialize())
 
 
 """

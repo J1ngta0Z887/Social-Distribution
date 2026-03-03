@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -22,6 +24,19 @@ class APITests(TestCase):
             bio="A test author.",
             github_url="https://github.com/veryfaketestauthorsgithub",
             picture_url="http://example.com/testauthorsphoto.jpg",
+        )
+
+        self.other_user = self.user_model.objects.create(
+            username="otheruser",
+            password="password",
+        )
+        self.other_author = Author.objects.create(
+            user=self.other_user,
+            display_name="Other Author",
+            host="https://otherauthor/",
+            bio="The other author.",
+            github_url="https://github.com/veryfakeotherauthorsgithub",
+            picture_url="http://example.com/otherauthorsphoto.jpg",
         )
 
         self.client.force_login(self.test_user)
@@ -128,17 +143,84 @@ class APITests(TestCase):
         self.assertEqual(payload["profileImage"], self.test_author.picture_url)
         self.assertIn("web", payload)
 
-        # Test GET for non-existent author returns 404
-        import uuid
-
-        fake_uuid = uuid.uuid4()
-        response = self.client.get(f"/api/authors/{fake_uuid}/")
+        response = self.client.get(f"/api/authors/fakeid/")
         self.assertEqual(response.status_code, 404)
 
-    def api_authors_の_put(self):
+    def test_api_authors_の_put(self):
         """
         Test: PUT /api/authors/の
         """
+        author_id = self.test_author.id
+
+        update_data = {
+            "bio": "Updated bio",
+            "github": "https://github.com/updatedgithub",
+            "profileImage": "http://example.com/updatedpic.jpg",
+        }
+        response = self.client.put(
+            f"/api/authors/{author_id}/",
+            data=json.dumps(update_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(payload["type"], "author")
+        self.assertEqual(payload["displayName"], self.test_author.display_name)
+        self.assertEqual(payload["bio"], "Updated bio")
+        self.assertEqual(payload["github"], "https://github.com/updatedgithub")
+        self.assertEqual(payload["profileImage"], "http://example.com/updatedpic.jpg")
+
+        # Verify changes persisted to database
+        self.test_author.refresh_from_db()
+        self.assertEqual(self.test_author.bio, "Updated bio")
+        self.assertEqual(
+            self.test_author.github_url, "https://github.com/updatedgithub"
+        )
+        self.assertEqual(
+            self.test_author.picture_url, "http://example.com/updatedpic.jpg"
+        )
+
+        # Test partial update (only displayName)
+        update_data = {"displayName": "Partially Updated Name"}
+        response = self.client.put(
+            f"/api/authors/{author_id}/",
+            data=json.dumps(update_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Verify only displayName changed, others remain from previous update
+        self.test_author.refresh_from_db()
+        self.assertEqual(self.test_author.display_name, "Partially Updated Name")
+        self.assertEqual(self.test_author.bio, "Updated bio")  # unchanged
+
+        # Login as the test user but try to modify other_author
+        response = self.client.put(
+            f"/api/authors/{self.other_author.id}/",
+            data=json.dumps({"displayName": "Hacked"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # Verify other_author was not modified
+        self.other_author.refresh_from_db()
+        self.assertEqual(self.other_author.display_name, "Other Author")
+
+        response = self.client.put(
+            "/api/authors/fakeid/",
+            data=json.dumps({"displayName": "Fake"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+        # Test with empty request body (should succeed with no changes)
+        response = self.client.put(
+            f"/api/authors/{author_id}/",
+            data="",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
 
     """
     ENDREGION
