@@ -41,7 +41,7 @@ class APITests(TestCase):
         # Create multiple authors for pagination testing
         authors = []
         for i in range(5):
-            user = self.user_model.objects.create_user(
+            user = self.user_model.objects.create(
                 username=f"testuser{i}",
                 password=f"testpass{i}",
             )
@@ -69,9 +69,7 @@ class APITests(TestCase):
 
         # Check that all authors are returned (including existing ones)
         all_authors_count = Author.objects.count()
-        self.assertEqual(
-            len(payload["authors"]), min(all_authors_count, payload["size"])
-        )
+        self.assertEqual(len(payload["authors"]), all_authors_count)
 
         # Check author structure matches spec
         if payload["authors"]:
@@ -110,10 +108,32 @@ class APITests(TestCase):
     REGION https://uofa-cmput404.github.io/general/project.html#single-author-api
     """
 
-    def api_authors_の_get(self):
+    def test_api_authors_の_get(self):
         """
         Test: GET /api/authors/の
         """
+        # Test GET for existing author
+        author_id = self.test_author.id
+        response = self.client.get(f"/api/authors/{author_id}/")
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(payload["type"], "author")
+        self.assertEqual(
+            payload["id"], f"{self.test_author.host}api/authors/{self.test_author.id}"
+        )
+        self.assertEqual(payload["displayName"], self.test_author.display_name)
+        self.assertEqual(payload["host"], f"{self.test_author.host}api/")
+        self.assertEqual(payload["github"], self.test_author.github_url)
+        self.assertEqual(payload["profileImage"], self.test_author.picture_url)
+        self.assertIn("web", payload)
+
+        # Test GET for non-existent author returns 404
+        import uuid
+
+        fake_uuid = uuid.uuid4()
+        response = self.client.get(f"/api/authors/{fake_uuid}/")
+        self.assertEqual(response.status_code, 404)
 
     def api_authors_の_put(self):
         """

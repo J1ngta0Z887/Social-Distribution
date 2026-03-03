@@ -1,6 +1,7 @@
 from typing import Self
-from django.db import models
+
 from django.conf import settings
+from django.db import models
 from django.forms import model_to_dict
 
 
@@ -13,15 +14,14 @@ class Author(models.Model):
     github_url = models.URLField(blank=True)
     picture_url = models.URLField(blank=True)
     following = models.ManyToManyField(
-        "self",
-        symmetrical=False,
-        related_name="followers",
-        blank=True)
-
+        "self", symmetrical=False, related_name="followers", blank=True
+    )
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["display_name", "host"], name="unique_display_name_host")
+            models.UniqueConstraint(
+                fields=["display_name", "host"], name="unique_display_name_host"
+            )
         ]
 
     def update_profile(self, new_data):
@@ -48,13 +48,13 @@ class Author(models.Model):
     def serialize(self):
         author = {}
         author["type"] = "author"
-        author["id"] = f"{self.host}/api/authors/{self.pk}"
-        author["host"] = f"{self.host}/api/"
+        author["id"] = f"{self.host}api/authors/{self.pk}"
+        author["host"] = f"{self.host}api/"
         author["displayName"] = self.display_name
         author["bio"] = self.bio
         author["github"] = self.github_url
         author["profileImage"] = self.picture_url
-        author["web"] = f"{self.host}/author/{self.display_name}"
+        author["web"] = f"{self.host}author/{self.display_name}"
         return author
 
     def __str__(self):
@@ -74,9 +74,7 @@ class Entry(models.Model):
     ]
 
     content_type = models.CharField(
-        max_length=20,
-        choices=CONTENT_TYPE_CHOICES,
-        default="text/plain"
+        max_length=20, choices=CONTENT_TYPE_CHOICES, default="text/plain"
     )
 
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="entries")
@@ -96,19 +94,18 @@ class Entry(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True)
     likes = models.ManyToManyField(Author, related_name="liked_entries", blank=True)
 
-
     class Meta:
         ordering = ["-created_at"]
-
 
     def __str__(self):
         return f"{self.author.user.username}: {self.title or 'Entry'}"
 
-    
 
 class Comment(models.Model):
     entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="comments")
-    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="comments"
+    )
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -119,14 +116,19 @@ class Comment(models.Model):
 
 
 class ProcessedEvent(models.Model):
-    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="processed_events")
+    author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="processed_events"
+    )
     event_id = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['author', 'event_id'], name='unique_author_event')
+            models.UniqueConstraint(
+                fields=["author", "event_id"], name="unique_author_event"
+            )
         ]
+
 
 class FollowRequest(models.Model):
     STATUS_CHOICES = [
@@ -134,8 +136,12 @@ class FollowRequest(models.Model):
         ("ACCEPTED", "Accepted"),
     ]
 
-    from_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="sent_follow_requests")
-    to_author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="received_follow_requests")
+    from_author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="sent_follow_requests"
+    )
+    to_author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="received_follow_requests"
+    )
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
@@ -146,13 +152,17 @@ class FollowRequest(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['from_author', 'to_author'], name='unique_follow_request')
+            models.UniqueConstraint(
+                fields=["from_author", "to_author"], name="unique_follow_request"
+            )
         ]
 
     def serialize(self):
         follow_req = {}
         follow_req["type"] = "follow"
-        follow_req["summary"] = f"{self.from_author.display_name} wants to follow {self.to_author.display_name}"
+        follow_req["summary"] = (
+            f"{self.from_author.display_name} wants to follow {self.to_author.display_name}"
+        )
         follow_req["actor"] = self.from_author.serialize()
         follow_req["object"] = self.to_author.serialize()
         return follow_req

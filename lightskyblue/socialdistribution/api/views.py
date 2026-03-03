@@ -1,18 +1,17 @@
 import json
 from functools import wraps
-from http.client import HTTPResponse
 from urllib.request import Request
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.views import View
 
 from ..models import Author, FollowRequest
 
 
-def get_author_model_from_id(author_id: int | str) -> Author | None:
+def get_author_model_from_id(author_id: str) -> Author | None:
     """
     Retrieves an `Author` from the database based on the provided author ID.
     Supports either number ID or the authors display name.
@@ -39,7 +38,7 @@ def user_must_be_author(capture_name: str):
     Usage example::
 
         @user_must_be_author(capture_name="author_id")
-        def get(self, req: HTTPResponse):
+        def get(self, req: HttpRequest):
             ...
 
     :param capture_name: Captured values name in the route that represents the author ID
@@ -51,6 +50,8 @@ def user_must_be_author(capture_name: str):
         def wrapper(self, *args, **kwargs):
             user = self.request.user
             author_id = kwargs.get(capture_name)
+            if not author_id or type(author_id) is not str:
+                return JsonResponse({}, status=404)
             author = get_author_model_from_id(author_id)
             if not author:
                 return JsonResponse({}, status=404)
@@ -72,7 +73,7 @@ class api_authors(View):
     def _pull(self):
         return Author.objects.all()
 
-    def get(self, req: HTTPResponse):
+    def get(self, req: HttpRequest):
         authors = self._pull()
         try:
             page = req.GET.get("page", 1)
@@ -97,6 +98,31 @@ class api_authors(View):
         return JsonResponse(resp)
 
         return resp
+
+
+"""
+ENDREGION
+"""
+
+
+"""
+REGION https://uofa-cmput404.github.io/general/project.html#single-author-api
+"""
+
+
+class api_authors_の(View):
+    def _pull(self, author_id: str):
+        return get_author_model_from_id(author_id)
+
+    def _push():
+        pass
+
+    def get(self, req: HttpRequest, author_id: str):
+        author = self._pull(author_id)
+
+        if author is None:
+            return JsonResponse({}, status=404)
+        return JsonResponse(author.serialize(), status=200)
 
 
 """
