@@ -1,3 +1,4 @@
 Django>=5.0.1
 markdown-it-py
 requests
+django-stubs[compatible-mypy]

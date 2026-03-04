@@ -221,6 +221,26 @@ class api_authors_の_following_よ(View):
 
         return JsonResponse(other_other.serialize())
 
+    @user_must_be_author("author_id")
+    def put(self, req: HttpRequest, author_id: str, other_author_id: str):
+        # REQUIRE: Inbox API
+        pass
+
+    @user_must_be_author("author_id")
+    def delete(self, req: HttpRequest, author_id: str, other_author_id: str):
+        pass
+        curr_author = get_author_model_from_id(author_id)
+        other_other = get_model_author_from_hostname_and_id(other_author_id)
+        if (
+            not curr_author
+            or not other_other
+            or not curr_author.following.filter(id=other_other.id).exists()
+        ):
+            return JsonResponse({}, status=404)
+
+        curr_author.following.remove(other_other)
+        return JsonResponse({})
+
 
 """
 ENDREGION

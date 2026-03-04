@@ -359,11 +359,38 @@ class APITests(TestCase):
         """
         Test: PUT api/authors/の/following/よ
         """
+        # REQUIRE: Inbox API
 
-    def api_authors_の_following_よ_delete(self):
+    def test_api_authors_の_following_よ_delete(self):
         """
         Test: DELETE api/authors/の/following/よ
         """
+        author_id = self.test_author.id
+        other_author_serialized = self.other_author.serialize()
+        other_author_encoded_fqid = parse.quote(other_author_serialized["id"], safe="")
+
+        self.test_author.following.add(self.other_author)
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/following/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            self.test_author.following.filter(id=self.other_author.id).exists()
+        )
+
+        response = self.client.delete(
+            f"/api/authors/{author_id}/following/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(f"/api/authors/{author_id}/following/999999/")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(
+            f"/api/authors/{self.other_author.id}/following/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 401)
 
     """
     ENDREGION
