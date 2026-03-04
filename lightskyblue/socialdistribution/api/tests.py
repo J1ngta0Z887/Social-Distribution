@@ -7,40 +7,6 @@ from django.test import TestCase
 from ..models import Author
 
 
-def get_model_author_from_hostname_and_id(foreign_author_id: str):
-    """
-    Retrieves an `Author` from the database based on a percent-encoded foreign author FQID.
-    The FQID is a URL like http://example.com/api/authors/{AUTHOR_SERIAL}.
-
-    :param foreign_author_id: A percent-encoded URL of the foreign author.
-    :type foreign_author_id: str
-    :return: The `Author` if found locally; otherwise, returns `None`.
-    :rtype: Author | None
-    """
-    from urllib.parse import unquote, urlparse
-
-    try:
-        decoded_id = unquote(foreign_author_id)
-        parsed = urlparse(decoded_id)
-
-        hostname = parsed.netloc
-        if not hostname:
-            return None
-
-        path = parsed.path.rstrip("/")
-        path_parts = path.split("/")
-        if not path_parts:
-            return None
-
-        last_directory = path_parts[-1]
-        authors = Author.objects.filter(host__contains=hostname, id=last_directory)
-        if len(authors) < 1:
-            return None
-        return authors[0]
-    except (ValueError, IndexError):
-        return None
-
-
 # disclaimer of AI usage:
 # many of these test cases are initially generated with Kimi 2.5, then cleaned up by hand
 class APITests(TestCase):
@@ -245,7 +211,7 @@ class APITests(TestCase):
             data=json.dumps({"displayName": "Fake"}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 401)
 
         # Test with empty request body (should succeed with no changes)
         response = self.client.put(
@@ -326,29 +292,13 @@ class APITests(TestCase):
         """
         author_id = self.test_author.id
 
-        # Create an author for test_author to follow
-        followed_user = self.user_model.objects.create(
-            username="followeduser",
-            password="followedpass",
-        )
-        followed_author = Author.objects.create(
-            user=followed_user,
-            display_name="Followed Author",
-            host="http://testserver",
-            bio="An author being followed.",
-            github_url="https://github.com/followeduser",
-            picture_url="http://example.com/followedpic.jpg",
-        )
-        self.test_author.following.add(followed_author)
-        self.addCleanup(followed_user.delete)
-        self.addCleanup(followed_author.delete)
-        # self.client.force_login(self.test_user)
+        self.test_author.following.add(self.other_author)
 
-        followed_author_serialized = followed_author.serialize()
+        other_author_serialized = self.other_author.serialize()
 
-        encoded_fqid = parse.quote(followed_author_serialized["id"], safe="")
+        other_author_encoded_fqid = parse.quote(other_author_serialized["id"], safe="")
         response = self.client.get(
-            f"/api/authors/{self.test_author.id}/following/{encoded_fqid}/"
+            f"/api/authors/{self.test_author.id}/following/{other_author_encoded_fqid}/"
         )
         self.assertEqual(response.status_code, 200)
         payload = response.json()
@@ -356,43 +306,28 @@ class APITests(TestCase):
         self.assertIn("id", payload)
         self.assertIn("host", payload)
         self.assertIn("displayName", payload)
-        self.assertEqual(payload["displayName"], followed_author.display_name)
+        self.assertEqual(payload["displayName"], other_author_serialized["displayName"])
 
-        # Test 404 when not following the other author
-        not_followed_user = self.user_model.objects.create(
-            username="notfolloweduser",
-            password="notfollowedpass",
-        )
-        not_followed_author = Author.objects.create(
-            user=not_followed_user,
-            display_name="Not Followed Author",
-            host="http://testserver",
-            bio="An author not being followed.",
-            github_url="https://github.com/notfolloweduser",
-            picture_url="http://example.com/notfollowedpic.jpg",
-        )
-        self.addCleanup(not_followed_user.delete)
-        self.addCleanup(not_followed_author.delete)
-        not_following_serialized = not_followed_author.serialize()
-        not_following_id = parse.quote(not_following_serialized["id"], safe="")
+        # now test when not following
+        self.test_author.following.remove(self.other_author)
         response = self.client.get(
-            f"/api/authors/{author_id}/following/{not_following_id}/"
+            f"/api/authors/{author_id}/following/{other_author_encoded_fqid}/"
         )
         self.assertEqual(response.status_code, 404)
 
-        # Test 404 when other author doesn't exist
+        # Test 401 when other author doesn't exist
         response = self.client.get(f"/api/authors/{author_id}/following/999999/")
         self.assertEqual(response.status_code, 404)
 
         # Test 401 when user is not the owner (unauthorized)
         response = self.client.get(
-            f"/api/authors/{self.other_author.id}/following/{not_following_id}/"
+            f"/api/authors/{self.other_author.id}/following/{other_author_encoded_fqid}/"
         )
         self.assertEqual(response.status_code, 401)
 
-        # Test 404 when author_id is invalid
+        # Test 401 when author_id is invalid
         response = self.client.get("/api/authors/invalidauthor/following/1/")
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 401)
 
         # Test with foreign author using encoded FQID
         foreign_user = self.user_model.objects.create(
@@ -411,10 +346,7 @@ class APITests(TestCase):
         self.addCleanup(foreign_user.delete)
         self.addCleanup(foreign_author.delete)
 
-        # Create encoded FQID for foreign author
-        from urllib.parse import quote
-
-        foreign_fqid = quote(
+        foreign_fqid = parse.quote(
             f"http://foreignhost.com/api/authors/{foreign_author.id}", safe=""
         )
         response = self.client.get(

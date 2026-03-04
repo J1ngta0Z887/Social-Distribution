@@ -88,10 +88,10 @@ def user_must_be_author(capture_name: str):
             user = self.request.user
             author_id = kwargs.get(capture_name)
             if not author_id or type(author_id) is not str:
-                return JsonResponse({}, status=404)
+                return JsonResponse({}, status=401)
             author = get_author_model_from_id(author_id)
             if not author:
-                return JsonResponse({}, status=404)
+                return JsonResponse({}, status=401)
             if user.id != author.user.id:
                 return JsonResponse({}, status=401)
             return func(self, *args, **kwargs)
