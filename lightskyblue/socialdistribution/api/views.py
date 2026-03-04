@@ -1,12 +1,14 @@
 import json
 from functools import wraps
 from json.decoder import JSONDecodeError
+from urllib.parse import unquote
 from urllib.request import Request
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.http import HttpRequest, JsonResponse
+from django.http.response import HttpResponse
 from django.views import View
 
 from ..models import Author, FollowRequest
@@ -28,6 +30,40 @@ def get_author_model_from_id(author_id: str) -> Author | None:
         else:
             return Author.objects.get(display_name=author_id)
     except ObjectDoesNotExist:
+        return None
+
+
+def get_model_author_from_hostname_and_id(foreign_author_id: str):
+    """
+    Retrieves an `Author` from the database based on a percent-encoded foreign author FQID.
+    The FQID is a URL like http://example.com/api/authors/{AUTHOR_SERIAL}.
+
+    :param foreign_author_id: A percent-encoded URL of the foreign author.
+    :type foreign_author_id: str
+    :return: The `Author` if found locally; otherwise, returns `None`.
+    :rtype: Author | None
+    """
+    from urllib.parse import unquote, urlparse
+
+    try:
+        decoded_id = unquote(foreign_author_id)
+        parsed = urlparse(decoded_id)
+
+        hostname = parsed.netloc
+        if not hostname:
+            return None
+
+        path = parsed.path.rstrip("/")
+        path_parts = path.split("/")
+        if not path_parts:
+            return None
+
+        last_directory = path_parts[-1]
+        authors = Author.objects.filter(host__contains=hostname, id=last_directory)
+        if len(authors) < 1:
+            return None
+        return authors[0]
+    except (ValueError, IndexError):
         return None
 
 
@@ -138,6 +174,52 @@ class api_authors_の(View):
 
         self._push(author, payload)
         return JsonResponse(author.serialize())
+
+
+"""
+ENDREGION
+"""
+
+"""
+REGION https://uofa-cmput404.github.io/general/project.html#following-api
+"""
+
+
+class api_authors_の_following(View):
+    def _pull(self, author_id: str):
+        author = get_author_model_from_id(author_id)
+        if not author:
+            return []
+        return author.following.all()
+
+    @user_must_be_author("author_id")
+    def get(self, req: HttpRequest, author_id: str):
+        following_list = self._pull(author_id)
+
+        resp = {}
+        resp["type"] = "following"
+        resp["authors"] = []
+        for author in following_list:
+            resp["authors"].append(author.serialize())
+        return JsonResponse(resp)
+
+
+class api_authors_の_following_よ(View):
+    def _pull(self, author_id: str):
+        pass
+
+    @user_must_be_author("author_id")
+    def get(self, req: HttpRequest, author_id: str, other_author_id: str):
+        curr_author = get_author_model_from_id(author_id)
+        other_other = get_model_author_from_hostname_and_id(other_author_id)
+        if (
+            not curr_author
+            or not other_other
+            or not curr_author.following.filter(id=other_other.id).exists()
+        ):
+            return JsonResponse({}, status=404)
+
+        return JsonResponse(other_other.serialize())
 
 
 """

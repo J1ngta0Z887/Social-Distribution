@@ -48,13 +48,13 @@ class Author(models.Model):
     def serialize(self):
         author = {}
         author["type"] = "author"
-        author["id"] = f"{self.host}api/authors/{self.pk}"
-        author["host"] = f"{self.host}api/"
+        author["id"] = f"{self.host}/api/authors/{self.pk}"
+        author["host"] = f"{self.host}/api/"
         author["displayName"] = self.display_name
         author["bio"] = self.bio
         author["github"] = self.github_url
         author["profileImage"] = self.picture_url
-        author["web"] = f"{self.host}author/{self.display_name}"
+        author["web"] = f"{self.host}/author/{self.display_name}"
         return author
 
     def __str__(self):
