@@ -8,7 +8,8 @@ from ..models import Author
 
 
 # disclaimer of AI usage:
-# many of these test cases are initially generated with Kimi 2.5, then cleaned up by hand
+# many of these test cases are initially generated with some open source model,
+# then cleaned up by hand
 class APITests(TestCase):
     user_model = get_user_model()
 
@@ -400,20 +401,78 @@ class APITests(TestCase):
     REGION https://uofa-cmput404.github.io/general/project.html#followers-api
     """
 
-    def api_authors_の_followers_よ_get(self):
+    def test_api_authors_の_followers_よ_get(self):
         """
         Test: GET api/authors/の/followers/よ
         """
+        author_id = self.test_author.id
+
+        self.test_author.followers.add(self.other_author)
+
+        other_author_serialized = self.other_author.serialize()
+        other_author_encoded_fqid = parse.quote(other_author_serialized["id"], safe="")
+
+        response = self.client.get(
+            f"/api/authors/{self.test_author.id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.test_author.followers.remove(self.other_author)
+        response = self.client.get(
+            f"/api/authors/{author_id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(f"/api/authors/{author_id}/followers/999999/")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(
+            f"/api/authors/{self.other_author.id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 401)
+
+        response = self.client.get("/api/authors/invalidauthor/followers/1/")
+        self.assertEqual(response.status_code, 401)
 
     def api_authors_の_followers_よ_put(self):
         """
         Test: PUT api/authors/の/followers/よ
         """
 
-    def api_authors_の_followers_よ_delete(self):
+    def test_api_authors_の_followers_よ_delete(self):
         """
         Test: DELETE api/authors/の/followers/よ
         """
+        author_id = self.test_author.id
+
+        other_author_serialized = self.other_author.serialize()
+        other_author_encoded_fqid = parse.quote(other_author_serialized["id"], safe="")
+
+        self.test_author.followers.add(self.other_author)
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            self.test_author.followers.filter(id=self.other_author.id).exists()
+        )
+
+        response = self.client.delete(
+            f"/api/authors/{author_id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(f"/api/authors/{author_id}/followers/999999/")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(
+            f"/api/authors/{self.other_author.id}/followers/{other_author_encoded_fqid}/"
+        )
+        self.assertEqual(response.status_code, 401)
+
+        response = self.client.delete("/api/authors/invalidauthor/followers/1/")
+        self.assertEqual(response.status_code, 401)
 
     """
     ENDREGION

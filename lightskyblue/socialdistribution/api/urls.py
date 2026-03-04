@@ -5,6 +5,7 @@ from django.urls import include, path, re_path
 from .views import (
     api_authors,
     api_authors_の,
+    api_authors_の_followers_よ,
     api_authors_の_following,
     api_authors_の_following_よ,
 )
@@ -26,6 +27,10 @@ urlpatterns = [
     path(
         "authors/<str:author_id>/following/<path:other_author_id>/",
         api_authors_の_following_よ.as_view(),
+    ),
+    path(
+        "authors/<str:author_id>/followers/<path:other_author_id>/",
+        api_authors_の_followers_よ.as_view(),
     ),
     # path(
     #     "authors/",
