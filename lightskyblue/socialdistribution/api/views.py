@@ -427,6 +427,74 @@ class api_entries_よ(View):
         return JsonResponse(entry.serialize())
 
 
+class api_authors_の_entries(View):
+    def get(self, req: HttpRequest, target_author_id: str):
+        author = get_author_model_from_id(target_author_id)
+        if not author:
+            return JsonResponse({}, status=404)
+
+        user = req.user
+        request_author = None
+
+        if user.is_authenticated:
+            request_author = get_author_model_from_id(str(user.id))
+
+        visibility_modifiers = ["PUBLIC"]
+        entries = Entry.objects.filter(author=author).order_by("id")
+
+        if request_author:
+            if request_author.id != author.id:
+                if request_author.is_following(author):
+                    visibility_modifiers.append("UNLISTED")
+                    if author.is_friends_with(request_author):
+                        visibility_modifiers.append("FRIENDS")
+            else:
+                visibility_modifiers.extend(["UNLISTED", "FRIENDS", "DELETED"])
+
+        entries = entries.filter(visibility__in=visibility_modifiers)
+
+        try:
+            page = req.GET.get("page", 1)
+        except ValueError:
+            page = 1
+        try:
+            size = req.GET.get("size", 10)
+        except ValueError:
+            size = 10
+
+        paginator = Paginator(entries, size)
+        page_obj = paginator.get_page(page)
+
+        resp = {}
+        resp["type"] = "entries"
+        resp["page"] = page_obj.number
+        resp["size"] = page_obj.paginator.per_page
+        resp["entries"] = [entry.serialize() for entry in page_obj.object_list]
+
+        return JsonResponse(resp)
+
+    @user_must_be_author("author_id")
+    def post(self, req: HttpRequest, author_id: str):
+        # TODO: add better form checks
+        author = typing.cast(Author, get_author_model_from_id(author_id))
+
+        try:
+            data = json.loads(req.body)
+        except json.JSONDecodeError:
+            return JsonResponse({}, status=400)
+
+        entry = Entry(author=author)
+        entry.title = data.get("title", "")
+        entry.content = data.get("content", "")
+        entry.content_type = data.get("contentType", "text/plain")
+        entry.visibility = data.get("visibility", "PUBLIC")
+        entry.image_url = data.get("image_url", "")
+
+        entry.save()
+
+        return JsonResponse(entry.serialize(), status=201)
+
+
 """
 ENDREGION
 """

@@ -718,7 +718,6 @@ class APITests(TestCase):
             content_type="text/plain",
             visibility="PUBLIC",
         )
-        entry_id = entry.id
         self.addCleanup(entry.delete)
         entry_serialized = entry.serialize()
         entry_serialized_id = parse.quote(entry_serialized["id"], safe="")
@@ -748,10 +747,122 @@ class APITests(TestCase):
         response = self.client.get(f"/api/entries/{entry_friends_serialized_id}")
         self.assertEqual(response.status_code, 401)
 
-    def api_authors_の_entries_get(self):
+    def test_api_authors_の_entries_get(self):
         """
         Test: GET api/authors/の/entries
         """
+        entry_public = Entry.objects.create(
+            author=self.test_author,
+            title="Public Entry",
+            content="This is a public entry.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        self.addCleanup(entry_public.delete)
+
+        entry_unlisted = Entry.objects.create(
+            author=self.test_author,
+            title="Unlisted Entry",
+            content="This is an unlisted entry.",
+            content_type="text/plain",
+            visibility="UNLISTED",
+        )
+        self.addCleanup(entry_unlisted.delete)
+
+        entry_friends = Entry.objects.create(
+            author=self.test_author,
+            title="Friends Entry",
+            content="This is a friends-only entry.",
+            content_type="text/plain",
+            visibility="FRIENDS",
+        )
+        self.addCleanup(entry_friends.delete)
+
+        entry_deleted = Entry.objects.create(
+            author=self.test_author,
+            title="Deleted Entry",
+            content="This is a deleted entry.",
+            content_type="text/plain",
+            visibility="DELETED",
+        )
+        self.addCleanup(entry_deleted.delete)
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(payload["type"], "entries")
+        self.assertIn("page", payload)
+        self.assertIn("size", payload)
+        self.assertIn("entries", payload)
+
+        response = self.client.get(f"/api/authors/fakeauthorid/entries/")
+        self.assertEqual(response.status_code, 404)
+
+        self.client.logout()
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 1)
+
+        self.client.force_login(self.test_user)
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 4)
+
+        self.client.force_login(self.other_user)
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 1)
+
+        self.test_author.followers.add(self.other_author)
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 2)
+
+        self.test_author.following.add(self.other_author)
+
+        response = self.client.get(f"/api/authors/{self.test_author.id}/entries/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 3)
+
+        self.test_author.following.remove(self.other_author)
+        self.other_author.following.remove(self.test_author)
+
+        for i in range(15):
+            entry = Entry.objects.create(
+                author=self.test_author,
+                title=f"Entry {i}",
+                content=f"Content {i}",
+                content_type="text/plain",
+                visibility="PUBLIC",
+            )
+            self.addCleanup(entry.delete)
+
+        for i in range(1, 4):
+            response = self.client.get(
+                f"/api/authors/{self.test_author.id}/entries?page={i}&size=5"
+            )
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertEqual(len(payload["entries"]), 5)
+            self.assertEqual(payload["size"], 5)
+            self.assertEqual(payload["page"], i)
+
+        response = self.client.get(
+            f"/api/authors/{self.test_author.id}/entries?page=2&size=5"
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["entries"]), 5)
 
     def api_authors_の_entries_post(self):
         """
