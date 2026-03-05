@@ -707,10 +707,46 @@ class APITests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def api_entries_よ_get(self):
+    def test_api_entries_よ_get(self):
         """
         Test: GET api/entries/よ
         """
+        entry = Entry.objects.create(
+            author=self.test_author,
+            title="Test Entry",
+            content="This is a test entry.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        entry_id = entry.id
+        self.addCleanup(entry.delete)
+        entry_serialized = entry.serialize()
+        entry_serialized_id = parse.quote(entry_serialized["id"], safe="")
+        response = self.client.get(f"/api/entries/{entry_serialized_id}")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["type"], "entry")
+        self.assertEqual(payload["id"], entry_serialized["id"])
+        self.assertEqual(payload["title"], "Test Entry")
+        self.assertEqual(payload["content"], "This is a test entry.")
+        self.assertEqual(payload["contentType"], "text/plain")
+        self.assertEqual(payload["visibility"], "PUBLIC")
+
+        response = self.client.get("/api/entries/fakeentryid")
+        self.assertEqual(response.status_code, 404)
+
+        entry_friends = Entry.objects.create(
+            author=self.other_author,
+            title="Friends Only Entry",
+            content="This entry is for friends only.",
+            content_type="text/plain",
+            visibility="FRIENDS",
+        )
+        self.addCleanup(entry_friends.delete)
+
+        entry_friends_serialized_id = parse.quote(entry_friends.serialize()["id"])
+        response = self.client.get(f"/api/entries/{entry_friends_serialized_id}")
+        self.assertEqual(response.status_code, 401)
 
     def api_authors_の_entries_get(self):
         """

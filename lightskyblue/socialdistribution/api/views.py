@@ -68,6 +68,36 @@ def get_model_author_from_hostname_and_id(foreign_author_id: str):
         return None
 
 
+def get_entry_from_hostname_and_id(foreign_entry_id: str):
+    from urllib.parse import unquote, urlparse
+
+    try:
+        decoded_id = unquote(foreign_entry_id)
+        parsed = urlparse(decoded_id)
+
+        hostname = parsed.netloc
+        if not hostname:
+            return None
+
+        path = parsed.path.rstrip("/")
+        path_parts = path.split("/")
+        if not path_parts:
+            return None
+
+        last_directory = path_parts[-1]
+        entries = Entry.objects.filter(id=last_directory)
+        for entry in entries:
+            if hostname in entry.author.host:
+                return entry
+        return None
+        # if len(entries) < 1:
+        #     return None
+        # return entries[0]
+
+    except (ValueError, IndexError):
+        return None
+
+
 def user_must_be_author(capture_name: str):
     """
     Decorator used to reduce the amount of boilerplate to ensure the requesting
@@ -317,10 +347,6 @@ ENDREGION
 REGION https://uofa-cmput404.github.io/general/project.html#entries-api
 """
 
-"""
-ENDREGION
-"""
-
 
 class api_authors_の_entries_よ(View):
     """
@@ -376,3 +402,31 @@ class api_authors_の_entries_よ(View):
 
         entry.save()
         return JsonResponse(entry.serialize())
+
+
+class api_entries_よ(View):
+    def get(self, req: HttpRequest, entry_id: str):
+        user = req.user
+        author = None
+        if user.is_authenticated:
+            author = get_author_model_from_id(str(user.id))
+
+        entry = get_entry_from_hostname_and_id(entry_id)
+        if not entry:
+            return JsonResponse({}, status=404)
+
+        if entry.visibility == "FRIENDS":
+            if (
+                author != entry.author
+                and not entry.author.followers.filter(
+                    host=author.host, display_name=author.display_name
+                ).exists()
+            ):
+                return JsonResponse({}, status=401)
+
+        return JsonResponse(entry.serialize())
+
+
+"""
+ENDREGION
+"""
