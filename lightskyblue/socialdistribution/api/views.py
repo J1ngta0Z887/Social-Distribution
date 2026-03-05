@@ -12,7 +12,7 @@ from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.views import View
 
-from ..models import Author, Entry, FollowRequest
+from ..models import Author, Comment, Entry, FollowRequest
 
 
 def get_author_model_from_id(author_id: str) -> Author | None:
@@ -493,6 +493,23 @@ class api_authors_の_entries(View):
         entry.save()
 
         return JsonResponse(entry.serialize(), status=201)
+
+
+"""
+ENDREGION
+"""
+
+"""
+REGION https://uofa-cmput404.github.io/general/project.html#comments-api
+"""
+
+
+class api_authors_の_entries_よ_comments(View):
+    pass
+
+
+class api_entries_の_comments(View):
+    pass
 
 
 """

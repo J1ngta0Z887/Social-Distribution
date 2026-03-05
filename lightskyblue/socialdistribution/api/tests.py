@@ -4,7 +4,7 @@ from urllib import parse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Author, Entry, FollowRequest
+from ..models import Author, Comment, Entry, FollowRequest
 
 
 # disclaimer of AI usage:
@@ -894,6 +894,16 @@ class APITests(TestCase):
     """
     REGION https://uofa-cmput404.github.io/general/project.html#comments-api
     """
+
+    def api_authors_の_entries_よ_comments_get(self):
+        """
+        Test: GET api/authors/の/entries/よ/comments
+        """
+
+    def api_entries_の_comments_get(self):
+        """
+        Test: GET api/entries/の/comments
+        """
 
     """
     ENDREGION
