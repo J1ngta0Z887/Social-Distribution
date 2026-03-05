@@ -2,10 +2,9 @@ import json
 from urllib import parse
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.test import TestCase
 
-from ..models import Author, Comment, Entry, FollowRequest
+from ..models import Author, Entry, FollowRequest
 
 
 # disclaimer of AI usage:
@@ -144,7 +143,7 @@ class APITests(TestCase):
         self.assertEqual(payload["profileImage"], self.test_author.picture_url)
         self.assertIn("web", payload)
 
-        response = self.client.get(f"/api/authors/fakeid/")
+        response = self.client.get("/api/authors/fakeid/")
         self.assertEqual(response.status_code, 404)
 
     def test_api_authors_の_put(self):
@@ -797,7 +796,7 @@ class APITests(TestCase):
         self.assertIn("size", payload)
         self.assertIn("entries", payload)
 
-        response = self.client.get(f"/api/authors/fakeauthorid/entries/")
+        response = self.client.get("/api/authors/fakeauthorid/entries/")
         self.assertEqual(response.status_code, 404)
 
         self.client.logout()
