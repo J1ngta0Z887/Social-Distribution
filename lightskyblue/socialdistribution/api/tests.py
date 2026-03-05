@@ -2,6 +2,7 @@ import json
 from urllib import parse
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from ..models import Author, Comment, Entry, FollowRequest
@@ -895,7 +896,7 @@ class APITests(TestCase):
     REGION https://uofa-cmput404.github.io/general/project.html#comments-api
     """
 
-    def api_authors_の_entries_よ_comments_get(self):
+    def test_api_authors_の_entries_よ_comments_get(self):
         """
         Test: GET api/authors/の/entries/よ/comments
         """

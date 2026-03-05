@@ -6,6 +6,7 @@ from django.forms import model_to_dict
 
 
 class Author(models.Model):
+    id = models.UUIDField
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=80, blank=True)
     host = models.URLField(default="http://127.0.0.1:8000")
@@ -62,6 +63,7 @@ class Author(models.Model):
 
 
 class Entry(models.Model):
+    id = models.UUIDField
     # TODO: handle deleted entry
     VISIBILITY_CHOICES = [
         ("PUBLIC", "Public"),
@@ -131,6 +133,7 @@ class Entry(models.Model):
 
 
 class Comment(models.Model):
+    id = models.UUIDField
     entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(
         Author, on_delete=models.CASCADE, related_name="comments"
@@ -145,6 +148,7 @@ class Comment(models.Model):
 
 
 class ProcessedEvent(models.Model):
+    id = models.UUIDField
     author = models.ForeignKey(
         Author, on_delete=models.CASCADE, related_name="processed_events"
     )
@@ -160,6 +164,7 @@ class ProcessedEvent(models.Model):
 
 
 class FollowRequest(models.Model):
+    id = models.UUIDField
     STATUS_CHOICES = [
         ("PENDING", "Pending"),
         ("ACCEPTED", "Accepted"),
