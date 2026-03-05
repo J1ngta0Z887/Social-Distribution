@@ -1,4 +1,5 @@
 import json
+import typing as typing
 from functools import wraps
 from json.decoder import JSONDecodeError
 from urllib.parse import unquote
@@ -108,7 +109,7 @@ REGION https://uofa-cmput404.github.io/general/project.html#authors-api
 
 class api_authors(View):
     def _pull(self):
-        return Author.objects.all()
+        return Author.objects.all().order_by("id")
 
     def get(self, req: HttpRequest):
         authors = self._pull()
@@ -283,6 +284,29 @@ class api_authors_の_followers_よ(View):
 
         curr_author.followers.remove(other_other)
         return JsonResponse(other_other.serialize())
+
+
+"""
+ENDREGION
+"""
+
+"""
+REGION https://uofa-cmput404.github.io/general/project.html#follow-request-api
+"""
+
+
+class api_authors_の_followくrequests(View):
+    @user_must_be_author("author_id")
+    def get(self, req: HttpRequest, author_id: str):
+        author = typing.cast(Author, get_author_model_from_id(author_id))
+
+        follow_reqs = FollowRequest.objects.filter(to_author=author)
+
+        resp = []
+        for follow in follow_reqs:
+            resp.append(follow.serialize())
+
+        return JsonResponse(resp, safe=False)
 
 
 """

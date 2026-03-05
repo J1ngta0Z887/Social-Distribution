@@ -8,6 +8,7 @@ from .views import (
     api_authors_の_followers_よ,
     api_authors_の_following,
     api_authors_の_following_よ,
+    api_authors_の_followくrequests,
 )
 
 # https://regex101.com/r/1tqPOL/1 (matches either author id or name)
@@ -31,6 +32,10 @@ urlpatterns = [
     path(
         "authors/<str:author_id>/followers/<path:other_author_id>/",
         api_authors_の_followers_よ.as_view(),
+    ),
+    path(
+        "authors/<str:author_id>/follow_requests/",
+        api_authors_の_followくrequests.as_view(),
     ),
     # path(
     #     "authors/",

@@ -4,7 +4,7 @@ from urllib import parse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Author
+from ..models import Author, FollowRequest
 
 
 # disclaimer of AI usage:
@@ -482,10 +482,64 @@ class APITests(TestCase):
     REGION https://uofa-cmput404.github.io/general/project.html#follow-request-api
     """
 
-    def api_authors_の_followくrequests_get(self):
+    def test_api_authors_の_followくrequests_get(self):
         """
         Test: GET api/authors/の/follow_requests
         """
+        author_id = self.test_author.id
+
+        # Test GET when there are no follow requests
+        response = self.client.get(f"/api/authors/{author_id}/follow_requests/")
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(len(payload), 0)
+
+        # Create follow requests from other authors to test_author
+        follow_requests = []
+        for i in range(3):
+            user = self.user_model.objects.create(
+                username=f"follower{i}",
+                password=f"followerpass{i}",
+            )
+            author = Author.objects.create(
+                user=user,
+                display_name=f"Follower {i}",
+                host="http://testserver",
+                bio=f"Bio for follower {i}",
+                github_url=f"https://github.com/follower{i}",
+                picture_url=f"http://example.com/follower{i}.jpg",
+            )
+            follow_req = FollowRequest.objects.create(
+                from_author=author,
+                to_author=self.test_author,
+                status="PENDING",
+            )
+            follow_requests.append((user, author, follow_req))
+            self.addCleanup(user.delete)
+            self.addCleanup(author.delete)
+
+        # Test GET with follow requests in the database
+        response = self.client.get(f"/api/authors/{author_id}/follow_requests/")
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(len(payload), 3)
+
+        # Verify structure of returned follow requests
+        for follow_req_data in payload:
+            self.assertEqual(follow_req_data["type"], "follow")
+            self.assertIn("summary", follow_req_data)
+            self.assertIn("actor", follow_req_data)
+            self.assertIn("object", follow_req_data)
+            self.assertEqual(follow_req_data["actor"]["type"], "author")
+            self.assertEqual(follow_req_data["object"]["type"], "author")
+
+        # Test unauthorized access - try to access other author's follow requests
+        response = self.client.get(
+            f"/api/authors/{self.other_author.id}/follow_requests/"
+        )
+        self.assertEqual(response.status_code, 401)
 
     def api_authors_の_followくrequests_post(self):
         """
