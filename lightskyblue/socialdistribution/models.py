@@ -117,6 +117,15 @@ class Entry(models.Model):
         entry["published"] = self.created_at
         entry["visibility"] = self.visibility
 
+        return entry
+
+    def update(self, new_data: dict):
+        # TODO: add more updates
+        self.title = new_data.get("title", self.title)
+        if new_data.get("content") is not None:
+            self.content = new_data.get("content", self.content)
+            self.description = self.content[:30] + "..."
+
     def __str__(self):
         return f"{self.author.user.username}: {self.title or 'Entry'}"
 

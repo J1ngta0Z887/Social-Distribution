@@ -327,15 +327,52 @@ class api_authors_の_entries_よ(View):
     Note: this version is for local node authors
     """
 
-    def get(self, req: HttpRequest, author_id: str, entry_id: str):
-        author = get_author_model_from_id(author_id)
-        if not author:
-            return JsonResponse({}, status=404)
+    def _pull(self, entry_id: str) -> Entry | None:
+        if not entry_id.isdigit():
+            return None
         entry = Entry.objects.all().filter(id=entry_id)
         if len(entry) < 1:
+            return None
+        return entry[0]
+
+    def get(self, req: HttpRequest, author_id: str, entry_id: str):
+        author = get_author_model_from_id(author_id)
+        if not author or not entry_id.isdigit():
             return JsonResponse({}, status=404)
-        entry = entry[0]
+        entry = self._pull(entry_id)
+        if not entry:
+            return JsonResponse({}, status=404)
         if entry.visibility == "FRIENDS" and entry.author.id != author.id:
             return JsonResponse({}, status=401)
 
-        pass
+        return JsonResponse(entry.serialize())
+
+    @user_must_be_author("author_id")
+    def delete(self, req: HttpRequest, author_id: str, entry_id: str):
+        author = typing.cast(Author, get_author_model_from_id(author_id))
+        entry = self._pull(entry_id)
+        if not entry:
+            return JsonResponse({}, status=404)
+        if entry.author.id != author.id:
+            return JsonResponse({}, status=401)
+        entry.delete()
+        return JsonResponse({})
+
+    @user_must_be_author("author_id")
+    def put(self, req: HttpRequest, author_id: str, entry_id: str):
+        author = typing.cast(Author, get_author_model_from_id(author_id))
+        entry = self._pull(entry_id)
+        if not entry:
+            return JsonResponse({}, status=404)
+        if entry.author.id != author.id:
+            return JsonResponse({}, status=401)
+
+        try:
+            data = json.loads(req.body)
+        except json.JSONDecodeError:
+            return JsonResponse({}, status=400)
+
+        entry.update(data)
+
+        entry.save()
+        return JsonResponse(entry.serialize())

@@ -4,7 +4,7 @@ from urllib import parse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Author, FollowRequest
+from ..models import Author, Entry, FollowRequest
 
 
 # disclaimer of AI usage:
@@ -555,20 +555,157 @@ class APITests(TestCase):
     REGION https://uofa-cmput404.github.io/general/project.html#entries-api
     """
 
-    def api_authors_の_entries_よ_get(self):
+    def test_api_authors_の_entries_よ_get(self):
         """
         Test: GET api/authors/の/entries/よ
         """
+        entry = Entry.objects.create(
+            author=self.test_author,
+            title="Test Entry",
+            content="This is test content for the entry.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        self.addCleanup(entry.delete)
 
-    def api_authors_の_entries_よ_put(self):
-        """
-        Test: PUT api/authors/の/entries/よ
-        """
+        response = self.client.get(
+            f"/api/authors/{self.test_author.id}/entries/{entry.id}"
+        )
+        self.assertEqual(response.status_code, 200)
 
-    def api_authors_の_entries_よ_delete(self):
+        payload = response.json()
+        self.assertEqual(payload["type"], "entry")
+        self.assertEqual(payload["title"], "Test Entry")
+        self.assertEqual(payload["content"], "This is test content for the entry.")
+        self.assertEqual(payload["contentType"], "text/plain")
+        self.assertEqual(payload["visibility"], "PUBLIC")
+
+        response = self.client.get(
+            f"/api/authors/{self.test_author.id}/entries/fakeentryid"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        entry_friends = Entry.objects.create(
+            author=self.test_author,
+            title="Friends Only Entry",
+            content="This entry is for friends only.",
+            content_type="text/plain",
+            visibility="FRIENDS",
+        )
+        self.addCleanup(entry_friends.delete)
+
+        response = self.client.get(
+            f"/api/authors/{self.other_author.id}/entries/{entry_friends.id}"
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_api_authors_の_entries_よ_delete(self):
         """
         Test: DELETE api/authors/の/entries/よ
         """
+        entry = Entry.objects.create(
+            author=self.test_author,
+            title="Test Entry to Delete",
+            content="This entry will be deleted.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        entry_id = entry.id
+        self.addCleanup(entry.delete)
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/entries/{entry_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Entry.objects.filter(id=entry_id).exists())
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/entries/{entry_id}"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/entries/fakeentryid"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        entry_other = Entry.objects.create(
+            author=self.other_author,
+            title="Other Author Entry",
+            content="This is another author's entry.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        self.addCleanup(entry_other.delete)
+
+        response = self.client.delete(
+            f"/api/authors/{self.test_author.id}/entries/{entry_other.id}"
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_api_authors_の_entries_よ_put(self):
+        """
+        Test: PUT api/authors/の/entries/よ
+        """
+        entry = Entry.objects.create(
+            author=self.test_author,
+            title="Original Title",
+            content="Original content.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        entry_id = entry.id
+        self.addCleanup(entry.delete)
+
+        response = self.client.put(
+            f"/api/authors/{self.test_author.id}/entries/{entry_id}",
+            data=json.dumps(
+                {
+                    "title": "Updated Title",
+                    "content": "# Updated content.",
+                    "visibility": "FRIENDS",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["title"], "Updated Title")
+        self.assertEqual(payload["content"], "# Updated content.")
+
+        entry.refresh_from_db()
+        self.assertEqual(entry.title, "Updated Title")
+
+        response = self.client.put(f"/api/authors/{self.test_author.id}/entries/999999")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.put(
+            f"/api/authors/{self.test_author.id}/entries/fakeentryid"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        entry_other = Entry.objects.create(
+            author=self.other_author,
+            title="Other Author Entry",
+            content="This is another author's entry.",
+            content_type="text/plain",
+            visibility="PUBLIC",
+        )
+        self.addCleanup(entry_other.delete)
+
+        response = self.client.put(
+            f"/api/authors/{self.test_author.id}/entries/{entry_other.id}",
+            data=json.dumps({"title": "Changed Title"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        response = self.client.put(
+            f"/api/authors/{self.test_author.id}/entries/{entry_id}",
+            data="invalid json",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
 
     def api_entries_よ_get(self):
         """
