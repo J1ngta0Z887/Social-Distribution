@@ -12,7 +12,7 @@ from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.views import View
 
-from ..models import Author, FollowRequest
+from ..models import Author, Entry, FollowRequest
 
 
 def get_author_model_from_id(author_id: str) -> Author | None:
@@ -312,3 +312,30 @@ class api_authors_の_followくrequests(View):
 """
 ENDREGION
 """
+
+"""
+REGION https://uofa-cmput404.github.io/general/project.html#entries-api
+"""
+
+"""
+ENDREGION
+"""
+
+
+class api_authors_の_entries_よ(View):
+    """
+    Note: this version is for local node authors
+    """
+
+    def get(self, req: HttpRequest, author_id: str, entry_id: str):
+        author = get_author_model_from_id(author_id)
+        if not author:
+            return JsonResponse({}, status=404)
+        entry = Entry.objects.all().filter(id=entry_id)
+        if len(entry) < 1:
+            return JsonResponse({}, status=404)
+        entry = entry[0]
+        if entry.visibility == "FRIENDS" and entry.author.id != author.id:
+            return JsonResponse({}, status=401)
+
+        pass

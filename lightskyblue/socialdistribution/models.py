@@ -62,10 +62,12 @@ class Author(models.Model):
 
 
 class Entry(models.Model):
+    # TODO: handle deleted entry
     VISIBILITY_CHOICES = [
         ("PUBLIC", "Public"),
         ("FRIENDS", "Friends"),
         ("UNLISTED", "Unlisted"),
+        ("DELETED", "Deleted"),
     ]
 
     CONTENT_TYPE_CHOICES = [
@@ -96,6 +98,24 @@ class Entry(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def serialize(self):
+        # authos needed to create url id
+        author: Author = self.author
+        entry = {}
+        entry["type"] = "entry"
+        entry["title"] = self.title
+        entry["id"] = f"{author.host}/api/authors/{author.id}/entries/{self.id}"
+        entry["web"] = f"{author.host}/authors/{author.id}/entries/{self.id}"
+        entry["description"] = self.content[:30] + "..."
+        entry["contentType"] = self.content_type
+        entry["content"] = self.content
+
+        # TODO: add comments and likes in api entry
+        entry["comments"] = {}
+        entry["likes"] = {}
+        entry["published"] = self.created_at
+        entry["visibility"] = self.visibility
 
     def __str__(self):
         return f"{self.author.user.username}: {self.title or 'Entry'}"

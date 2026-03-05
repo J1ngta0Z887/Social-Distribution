@@ -545,6 +545,7 @@ class APITests(TestCase):
         """
         Test: POST api/authors/の/inbox
         """
+        # REQUIRE: Inbox API
 
     """
     ENDREGION
